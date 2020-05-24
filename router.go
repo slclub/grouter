@@ -72,6 +72,12 @@ func (r *router) Handle(method, path string, handle HandleFunc) {
 		panic("HandleFunc is empty!")
 	}
 
+	// TODO:here need path parse the path. get all param keys.
+	params_keys := make([]string, 1)
+	// TODO:before lookup root node. we need to check method was allowed.
+	root := r.store.Lookup(method)
+	root.AddRoute(path, handle, params_keys)
+
 }
 
 // request execute
