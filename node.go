@@ -1,6 +1,8 @@
 package grouter
 
 import (
+	//"fmt"
+	"net/http"
 	"strings"
 )
 
@@ -15,8 +17,10 @@ const (
 )
 
 // the place of store the nodes.
+// TODO: auto node merge and split.for good performence.
 type nodeStore struct {
-	nodes map[string]Node
+	nodes        map[string]Node
+	http_methods map[string]bool
 }
 
 // Node defined need impement these interface function.
@@ -54,20 +58,42 @@ type node struct {
 }
 
 // ============================store router node function =====================
+func NewStore() Store {
+	st := &nodeStore{
+		http_methods: map[string]bool{},
+	}
+
+	st.http_methods[http.MethodGet] = true
+	st.http_methods[http.MethodHead] = true
+	st.http_methods[http.MethodOptions] = true
+	st.http_methods[http.MethodPost] = true
+	st.http_methods[http.MethodPut] = true
+	st.http_methods[http.MethodPatch] = true
+	st.http_methods[http.MethodDelete] = true
+	st.http_methods["ANY"] = true
+
+	return st
+}
 func (st *nodeStore) Save(n Node) {
 	st.nodes[n.GetIndices()] = n
 }
 
 func (st *nodeStore) Create() Store {
-	return &nodeStore{}
+	return NewStore()
 }
 
-func (st *nodeStore) Lookup(method string) (n Node) {
+func (st *nodeStore) Lookup(method string) (n Node, nothing string) {
 	n = st.nodes[method]
+	// TODO:need to support more schema. not only http
+	if !st.checkHttpMethod(method) {
+		nothing = "NOT ALLOWED METHOD"
+		return
+	}
 	if n == nil {
 		n = st.CreateNode(0)
 		n.SetIndices(method)
 		n.SetType(NODE_T_ROOT)
+		st.nodes = make(map[string]Node)
 		st.nodes[method] = n
 	}
 	return
@@ -79,6 +105,14 @@ func (st *nodeStore) CreateNode(param_num int) Node {
 		children: make(map[string]Node),
 		keys:     make([]string, param_num),
 	}
+}
+
+// http allowd methods check
+func (st *nodeStore) checkHttpMethod(method string) bool {
+	if st.http_methods[method] {
+		return true
+	}
+	return false
 }
 
 // ============================store router node function =====================
@@ -159,27 +193,29 @@ func (nd *node) GetKeys() []string {
 func (nd *node) Lookup(path string) (Node, string) {
 	var begin = 0
 
-	next := nd
+	var next Node
+	next = nd
 	head := nd
 	len_path := len(path)
 
 	if len_path == 1 {
-		next = head.GetNodeAuto(path[begin:1]).(*node)
+		next = head.GetNodeAuto(path[begin:1])
 		if next == nil {
 			return nd, path
 		}
 		return next, ""
 	}
 
-	for i:=1; i<= len_path; i++ {
-		if path[1] != '/' {
+	//fmt.Println("--------Lookup------", path)
+	for i := 0; i < len_path; i++ {
+		if path[i] != '/' || i == 0 {
 			continue
 		}
-		next = head.GetNodeAuto(path[begin:i]).(*node)
+		next = head.GetNodeAuto(path[begin:i])
 		if next == nil {
 			return head, path[begin:]
 		}
-		head = next
+		head = next.(*node)
 		begin = i
 	}
 
@@ -190,25 +226,29 @@ func (nd *node) Lookup(path string) (Node, string) {
 
 	return nd, path[begin:]
 }
+
+func (nd *node) ParseParams(pa ParameterArray, path_type int, param_str string) {
+}
+
 // implement store.AddRoute
-func (nd *node)AddRoute(path string, handle HandleFunc, param_keys []string) {
+func (nd *node) AddRoute(path string, handle HandleFunc, param_keys []string) {
 	f_node, path_l := nd.Lookup(path)
 	// Second condition was supported for "/" .
-	if path_l == "" || (path_l == "/" && path != path_l){
-		panic("[ERROR][GROUTER][ADD_ROUTE][PATH_EXIST]" + path)
+	if path_l == "" || (path_l == "/" && path != path_l) {
+		panic("[ERROR][GROUTER][ADD_ROUTE]PATH_EXIST[" + path + "]LEFT_PATH[" + path_l + "]")
 	}
 
 	// It must have error before add route. please check if in route handle.
-	if f_node == nil  {
+	if f_node == nil {
 		panic("[ERROR][GROUTE][FOUND_ROOT_NODE]")
 	}
 
 	path_l_slice := strings.Split(path_l, "/")
 	lenp := len(path_l_slice)
 
-	head := &node {
-			children : make(map[string]Node),
-		}
+	head := &node{
+		children: make(map[string]Node),
+	}
 	//head.SetType(NODE_T_WILD)
 
 	//// the lenp == 1 when path is "/"
@@ -226,27 +266,33 @@ func (nd *node)AddRoute(path string, handle HandleFunc, param_keys []string) {
 	//path_l_slice = path_l_slice[:lenp -1]
 
 	next := head
+	if lenp >= 2 && path_l_slice[0] == "" {
+		path_l_slice = path_l_slice[1:]
+		lenp--
+	}
 
+	//fmt.Println("--------AddRoute", path, "left path:", path_l)
 	for i, indices := range path_l_slice {
 		next.SetType(NODE_T_WILD)
 		next.SetIndices("/" + indices)
 		// that is our need node.
 		// first condition is ready for "/"
 		// second condition checked whether it is a leaf node.
-		if indices == "" || i + 2 == lenp{
-			ok :=f_node.AddNode(head)
+		if indices == "" || i+2 == lenp {
+			ok := f_node.AddNode(head)
 			// there should be no such situation. if there is, there is a problem with previous procedure.
 			if !ok {
-				panic ("[ERROR][GROUTER][ADD_NODE][CHILD_EXIST]CHILD_KEY[" + head.GetIndices()+ "]")
+				panic("[ERROR][GROUTER][ADD_NODE][CHILD_EXIST]CHILD_KEY[" + head.GetIndices() + "]RANGE[" + string(i) + "]")
 			}
 			next.keys = param_keys
 			next.SetPath(path)
 			next.SetType(NODE_T_PATH)
 			next.SetHandleFunc(handle)
+			break
 		}
 		// not a leaf node. create a wild node.
-		next_tmp := &node {
-			children : make(map[string]Node),
+		next_tmp := &node{
+			children: make(map[string]Node),
 		}
 		// link with before.
 		next.AddNode(next_tmp)
@@ -254,7 +300,6 @@ func (nd *node)AddRoute(path string, handle HandleFunc, param_keys []string) {
 	}
 }
 
-
 func (nd *node) GetChildren() map[string]Node {
-	return nil
+	return nd.children
 }
