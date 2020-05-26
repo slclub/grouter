@@ -2,17 +2,20 @@ package grouter
 
 import (
 	"io"
-	"net/http"
+	//"net/http"
 )
 
 // ====================================================================================
 // should move this interface to an Single package. Dont confuse with router.
-type Context interface {
+type Contexter interface {
 	// Extend ParameterArray
 	ParameterArray
 
 	Requester
 	Responser
+	Reset()
+	// server code http or rpc code
+	Status(code int)
 }
 
 type Param interface {
@@ -21,36 +24,35 @@ type Param interface {
 	Set(key string, value string)
 }
 
-type ParamsArray []Param
-
 type ParameterArray interface {
 	Get(string) interface{}
 	GetString(string) string
-	GetAll() ParamsArray
+	GetAll() []Param
+	SetParam(key string, value interface{})
 }
 
 // request from other place.
 type Requester interface {
-	GetRequest() interface{}
+	GetRequest(type_str string) interface{}
 	SetRequest(interface{}) bool
 }
 
 // response to client or other server.
 type Responser interface {
-	GetResponseWriter() io.Writer
+	GetResponseWriter(type_str string) io.Writer
 	SetResponseWriter(io.Writer)
 }
 
 //====================================================================================
 //
 type Executer interface {
-	Execute(Context)
+	Execute(Contexter)
 }
 
 //=====================================================================================
 
 // router haddle func
-type HandleFunc func(Context)
+type HandleFunc func(Contexter)
 
 type Router interface {
 
@@ -63,7 +65,7 @@ type Router interface {
 	SetDecoder(Path)
 
 	Handle(string, string, HandleFunc)
-	Execute(Context)
+	Execute(Contexter)
 	// Handle shortcut
 	// Handle(string, string, HandleFunc)
 	GET(string, HandleFunc)
@@ -74,7 +76,7 @@ type Router interface {
 	PUT(string, HandleFunc)
 	DELETE(string, HandleFunc)
 	//just for test. can directly bind with http lisen
-	ServeHTTP(res http.ResponseWriter, req *http.Request)
+	//ServeHTTP(res http.ResponseWriter, req *http.Request)
 
 	// except 200 3xx
 	// the rest of the error code should have handle function defined.
@@ -123,7 +125,7 @@ type Node interface {
 	// Add a new node to the childrens.
 	AddNode(Node) bool
 
-	AddKey(string)
+	AddKey([]string)
 	GetKeys() []string
 
 	GetChildren() map[string]Node

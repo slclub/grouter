@@ -2,6 +2,7 @@ package grouter
 
 import (
 	//"errors"
+	//"errors"
 	"fmt"
 	"github.com/slclub/link"
 	"net/http"
@@ -42,11 +43,17 @@ type router struct {
 
 func NewRouter() Router {
 
-	return &router{
+	r := &router{
 		store:        NewStore(),
 		decoder:      NewPath(),
 		code_handles: make(map[int]HandleFunc),
 	}
+	//bind code handle
+	r.BindCodeHandle(http.StatusNotFound, http_404_handle)
+	//http.StatusMethodNotAllowed
+	r.BindCodeHandle(http.StatusMethodNotAllowed, http_405_handle)
+	r.BindCodeHandle(http.StatusInternalServerError, http_500_handle)
+	return r
 }
 
 // Parse url and generate node and save it.
@@ -70,9 +77,11 @@ func (r *router) SetDecoder(path_dec Path) {
 
 func (r *router) check(path string) (bool, error) {
 
-	// path check
+	// do redirect path check
 	if len(path) < 1 || path[0] != '/' {
-		panic("")
+		//return false, errors.New("request url not found!")
+		//http.Redirect(w, req, "/404/get", http.StatusPermanentRedirect)
+		panic("[ERROR][GROUTER][URL][EMPTY] or [NOT START WITH /]")
 	}
 
 	return true, nil
@@ -83,7 +92,7 @@ func (r *router) CodeHandle(error_code int) HandleFunc {
 }
 
 func (r *router) BindCodeHandle(error_code int, handle HandleFunc) {
-	if handle != nil {
+	if handle == nil {
 		return
 	}
 	r.code_handles[error_code] = handle
@@ -148,15 +157,17 @@ func (r *router) Handle(method, path string, handle HandleFunc) {
 
 // request execute
 // when a client request, this function will be called.
-func (r *router) Execute(Context) {
-}
-
-// for test.
-func (r *router) ServeHTTP(res http.ResponseWriter, req *http.Request) {
+func (r *router) Execute(ctx Contexter) {
+	var req *http.Request
+	req = ctx.GetRequest("http").(*http.Request)
 	http_method := req.Method
 	path_type, path, params_str := r.GetDecoder().Decode(req.URL.Path)
 
-	root, nothing := r.GetStore().Lookup(http_method)
+	var root Node
+	var nothing string
+	if path_type > 0 {
+		root, nothing = r.GetStore().Lookup(http_method)
+	}
 	// method not allowed. handle 405
 	if root == nil {
 		handle := r.CodeHandle(http.StatusMethodNotAllowed)
@@ -179,6 +190,7 @@ func (r *router) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 		}
 
 		node.ParseParams(ctx, path_type, params_str.(string))
+		// test
 		handle(ctx)
 	}
 
@@ -192,9 +204,41 @@ func (r *router) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 			goto WALK_404
 		}
 		node.ParseParams(ctx, path_type, left_path)
+		// test
+		handle(ctx)
+
 	}
+	//TODO: return process node. include handle param and scope.
+	return
 WALK_404:
 	not_handle := r.CodeHandle(http.StatusNotFound)
+	if not_handle == nil {
+		return
+	}
 	not_handle(ctx)
 
+}
+
+// for test. cover test.
+// can bind with Http.ListenAndServe
+//func (r *router) ServeHTTP(res http.ResponseWriter, req *http.Request) {
+//
+//}
+
+// =========================================code handle func ===============================================
+func http_404_handle(ctx Contexter) {
+	ctx.Status(http.StatusNotFound)
+	ctx.GetResponseWriter("http").Write([]byte("404 not found"))
+
+}
+
+func http_405_handle(ctx Contexter) {
+	ctx.Status(http.StatusMethodNotAllowed)
+	ctx.GetResponseWriter("http").Write([]byte("405 not not allowed!"))
+}
+
+func http_500_handle(ctx Contexter) {
+	ctx.Status(http.StatusInternalServerError)
+	ctx.GetResponseWriter("http").Write([]byte("500 server internal error!"))
+	link.ERROR("[500] server internal error!")
 }

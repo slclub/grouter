@@ -2,18 +2,19 @@ package grouter
 
 import (
 	//"fmt"
+	"bytes"
 	"net/http"
 	"strings"
 )
 
 const (
 	// method node . as every method root node.
-	NODE_T_ROOT = 1
+	NODE_T_ROOT = uint8(1)
 	// wild node. have no path matched.
-	NODE_T_WILD = 2
+	NODE_T_WILD = uint8(2)
 
 	// valid path node.
-	NODE_T_PATH = 3
+	NODE_T_PATH = uint8(3)
 )
 
 // the place of store the nodes.
@@ -75,6 +76,9 @@ func NewStore() Store {
 	return st
 }
 func (st *nodeStore) Save(n Node) {
+	if st.nodes == nil {
+		st.nodes = make(map[string]Node)
+	}
 	st.nodes[n.GetIndices()] = n
 }
 
@@ -93,8 +97,7 @@ func (st *nodeStore) Lookup(method string) (n Node, nothing string) {
 		n = st.CreateNode(0)
 		n.SetIndices(method)
 		n.SetType(NODE_T_ROOT)
-		st.nodes = make(map[string]Node)
-		st.nodes[method] = n
+		st.Save(n)
 	}
 	return
 }
@@ -169,26 +172,29 @@ func (nd *node) GetNodeStr(indices string) Node {
 }
 
 func (nd *node) AddNode(one Node) bool {
-	if nd.children[one.GetIndices()] != nil {
+	indices := lowercase(one.GetIndices())
+	if nd.children[indices] != nil {
 		return false
 	}
-	nd.children[one.GetIndices()] = one
+	nd.children[indices] = one
 	return true
 }
 
-func (nd *node) AddKey(key string) {
-	for _, k := range nd.keys {
-		if key == k {
-			return
-		}
-	}
-	nd.keys = append(nd.keys, key)
+func (nd *node) AddKey(keys []string) {
+	//for _, k := range nd.keys {
+	//	if key == k {
+	//		return
+	//	}
+	//}
+	//nd.keys = append(nd.keys, key)
+	nd.keys = keys
 }
 
 func (nd *node) GetKeys() []string {
 	return nd.keys
 }
 
+// router query.
 // Match the longest chain
 func (nd *node) Lookup(path string) (Node, string) {
 	var begin = 0
@@ -198,20 +204,29 @@ func (nd *node) Lookup(path string) (Node, string) {
 	head := nd
 	len_path := len(path)
 
+	// len_path==1 path=/
 	if len_path == 1 {
-		next = head.GetNodeAuto(path[begin:1])
+		next = head.GetNodeAuto(lowercase(path[begin:1]))
 		if next == nil {
 			return nd, path
 		}
 		return next, ""
 	}
 
-	//fmt.Println("--------Lookup------", path)
+	// fmt.Println("--------Lookup------", path)
+	// Program optimization lowercase.
+	// avoid applying for buffer in the loop
+	// 这里可以优化掉 3 alloc/op  尽可能的避免在循环里申请buffer 代替lowercase
+	buf := bytes.NewBufferString(path)
+	buf.Reset()
 	for i := 0; i < len_path; i++ {
+		tmp_b := uint8(path[i])
+		lowercaseWithBuffer(buf, tmp_b)
 		if path[i] != '/' || i == 0 {
 			continue
 		}
-		next = head.GetNodeAuto(path[begin:i])
+		//next = head.GetNodeAuto(lowercase(path[begin:i]))
+		next = head.GetNodeAuto(string(buf.Bytes()[begin:i]))
 		if next == nil {
 			return head, path[begin:]
 		}
@@ -227,20 +242,103 @@ func (nd *node) Lookup(path string) (Node, string) {
 	return nd, path[begin:]
 }
 
+// url param pase to ParamterArray.
 func (nd *node) ParseParams(pa ParameterArray, path_type int, param_str string) {
+	// url: /xxx?param1=v  url question mark request
+	// it is not necessary to sort  by  keys of node.
+	if path_type == PATH_T_QUESTION {
+		begin := 0
+		var key, value = "", ""
+		// DEAL_ADD_MARK as symbol. use this sign explain the code using.
+		// To deal mark of + in here can have much better performance.
+		// deal_add_mark := false
+		for i, v := range param_str {
+
+			if v == '=' {
+				key = param_str[begin:i]
+				begin = i + 1
+				continue
+			}
+
+			if v == '&' {
+				value = param_str[begin:i]
+				begin = i + 1
+				pa.SetParam(key, value)
+				key, value = "", ""
+				continue
+			}
+		}
+		// add last param
+		if key != "" {
+			pa.SetParam(key, value)
+		}
+		return
+	}
+
+	// url: /xxx/xxx/:param1/:param2
+	if path_type == PATH_T_COMMON {
+		begin, record := 0, 0
+		var key, value = "", ""
+		for i, v := range param_str {
+			if v != '/' {
+				continue
+			}
+			value = param_str[begin:i]
+			begin = i + 1
+			key, _ = nd.getKey(record)
+			record++
+			pa.SetParam(key, value)
+			key, value = "", ""
+		}
+		if key != "" {
+			pa.SetParam(key, value)
+		}
+	}
+}
+
+func (nd *node) getKey(key interface{}) (string, int) {
+	if k, ok := key.(int); ok {
+		if k >= len(nd.keys)-1 {
+			return "", -1
+		}
+		return nd.keys[k], k
+	}
+
+	if k, ok := key.(string); ok {
+		for i, v := range nd.keys {
+			if v == k {
+				return v, i
+			}
+		}
+	}
+	return "", -1
+
 }
 
 // implement store.AddRoute
 func (nd *node) AddRoute(path string, handle HandleFunc, param_keys []string) {
+	//fmt.Println("--------AddRoute", path)
 	f_node, path_l := nd.Lookup(path)
-	// Second condition was supported for "/" .
-	if path_l == "" || (path_l == "/" && path != path_l) {
-		panic("[ERROR][GROUTER][ADD_ROUTE]PATH_EXIST[" + path + "]LEFT_PATH[" + path_l + "]")
-	}
 
 	// It must have error before add route. please check if in route handle.
 	if f_node == nil {
 		panic("[ERROR][GROUTE][FOUND_ROOT_NODE]")
+	}
+
+	// it is wild node and perfect match the path.
+	// this node can convert to path node.
+	if f_node.GetType() == NODE_T_WILD && path_l == "" {
+		f_node.SetPath(path)
+		f_node.SetType(NODE_T_PATH)
+		f_node.SetHandleFunc(handle)
+		f_node.AddKey(param_keys)
+		return
+	}
+
+	//fmt.Println("--------AddRoute", path, "left path:", path_l)
+	// Second condition was supported for "/" .
+	if path_l == "" || (path_l == "/" && path != path_l) {
+		panic("[ERROR][GROUTER][ADD_ROUTE]PATH_EXIST[" + path + "]LEFT_PATH[" + path_l + "]")
 	}
 
 	path_l_slice := strings.Split(path_l, "/")
@@ -249,21 +347,6 @@ func (nd *node) AddRoute(path string, handle HandleFunc, param_keys []string) {
 	head := &node{
 		children: make(map[string]Node),
 	}
-	//head.SetType(NODE_T_WILD)
-
-	//// the lenp == 1 when path is "/"
-	//// head just is node we needed.
-	//if (lenp == 1 || (lenp == 2 && path_l_slice[1] == "" ) {
-	//	f_node.AddNode(head)
-	//	head.keys = param_keys
-	//	head.SetPath(path)
-	//	head.SetType(NODE_T_PATH)
-	//	head.SetIndices("/" + path_l_slice[0])
-	//	head.SetHandleFunc(handle)
-	//	return
-	//}
-	//// rid of empty item.
-	//path_l_slice = path_l_slice[:lenp -1]
 
 	next := head
 	if lenp >= 2 && path_l_slice[0] == "" {
@@ -284,7 +367,7 @@ func (nd *node) AddRoute(path string, handle HandleFunc, param_keys []string) {
 			if !ok {
 				panic("[ERROR][GROUTER][ADD_NODE][CHILD_EXIST]CHILD_KEY[" + head.GetIndices() + "]RANGE[" + string(i) + "]")
 			}
-			next.keys = param_keys
+			next.AddKey(param_keys)
 			next.SetPath(path)
 			next.SetType(NODE_T_PATH)
 			next.SetHandleFunc(handle)
@@ -303,3 +386,5 @@ func (nd *node) AddRoute(path string, handle HandleFunc, param_keys []string) {
 func (nd *node) GetChildren() map[string]Node {
 	return nd.children
 }
+
+// =======================================================================

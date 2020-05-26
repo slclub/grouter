@@ -50,9 +50,13 @@ func (u *urldecoder) Parse(path string) (string, []string) {
 		if path[lenp-1] != '/' {
 			return path + "/", nil
 		}
+		if path_left != "" {
+			panic("[ERROR][GROUTER][PATH][NOT_VALID]")
+		}
+		return path, nil
 	}
 
-	if path_left[len(path_left)-1] == '/' {
+	if len(path_left) > 0 && path_left[len(path_left)-1] == '/' {
 		path_left = path_left[:len(path_left)-2]
 	}
 	param_keys := strings.Split(path_left, "/:")
@@ -61,7 +65,11 @@ func (u *urldecoder) Parse(path string) (string, []string) {
 
 // we can use ? define the router.
 func (u *urldecoder) ParseQuestion(path string, position int) (string, []string) {
-	path_rtn := path[:position] + "/"
+	var path_rtn string
+	// TODO: path valid check
+	if path[len(path)-1] != '/' {
+		path_rtn = path[:position] + "/"
+	}
 
 	param_keys := strings.Split(path[position+1:], "&")
 
@@ -84,15 +92,24 @@ func (u *urldecoder) CaseSensitive(status bool) {
 
 // parse client request url. example http request.
 func (u *urldecoder) Decode(path string) (int, string, interface{}) {
-	// TODO: encoding url
+	// TODO: encoding url  %f etc convert to string.
+	//
+	// 加号处理可以提供方法尽量不在这里处理，会影响性能
+	// Processing plus signs in other places can improve some performance
+
+	// deal split path.
+	// first section is url path. second section is params.
 	path_buf, param_str, path_type := u.convPath(path)
 	return path_type, string(path_buf), param_str
 }
 
 func (u *urldecoder) convPath(path string) ([]byte, string, int) {
 	lenp := len(path)
-	buf := make([]byte, lenp+1)
+	if lenp > 0 && path[0] == '*' {
+		return nil, "", 0
+	}
 
+	buf := make([]byte, lenp+1)
 	// write buf size.
 	w := 0
 	if path[0] != '/' {
@@ -101,12 +118,13 @@ func (u *urldecoder) convPath(path string) ([]byte, string, int) {
 	}
 
 	// [65, 97) if byte uin8 in this section, that is capital letter.
-	// convert to lower letter need -32
+	// convert to lower letter need -32. cant handle it here.
+	// param value should not to be converted.
 	for i := 0; i < lenp; i++ {
 		// replace // or /// to /
-		if path[i] == '/' && w > 0 && buf[w-1] == '/' {
-			continue
-		}
+		//if path[i] == '/' && w > 0 && buf[w-1] == '/' {
+		//	continue
+		//}
 
 		if path[i] == '?' {
 			buf[w] = '/'
