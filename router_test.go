@@ -62,11 +62,40 @@ func TestRouterQuestionHttp(t *testing.T) {
 	var handle_index HandleFunc = func(ctx Contexter) {
 		ctx.Status(http.StatusOK)
 	}
-	engine.router.GET("/robot/list?a=1&b=2", handle_index)
+	engine.router.GET("/robot/list", handle_index)
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/Ping/xiaoming", nil)
+	req, _ := http.NewRequest("GET", "/robot/list?a=1&b=2", nil)
+	///news/analysis?name=%E6%B5%8B%E8%AF%95%E6%95%B0%E6%8D%AE
 	engine.ServeHTTP(w, req)
+
+	print_store_tree_root(t, engine.router, http.MethodGet)
 	assert.Equal(t, http.StatusOK, w.Code)
+}
+func TestRouterQuestionEncodeUrl(t *testing.T) {
+	engine := NewEngine()
+	var handle_index HandleFunc = func(ctx Contexter) {
+		ctx.Status(http.StatusOK)
+	}
+	engine.router.GET("/news/analysis", handle_index)
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/news/analysis?name=%E6%B5%8B%E8%AF%95%E6%95%B0%E6%8D%AE", nil)
+	///news/analysis?name=%E6%B5%8B%E8%AF%95%E6%95%B0%E6%8D%AE
+	engine.ServeHTTP(w, req)
+
+	print_store_tree_root(t, engine.router, http.MethodGet)
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestRouter404(t *testing.T) {
+	engine := NewEngine()
+	var handle_list HandleFunc = func(ctx Contexter) {
+		ctx.Status(404)
+	}
+	engine.router.GET("/robot/list?a=1&b=2", handle_list)
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/Ping/notfound", nil)
+	engine.ServeHTTP(w, req)
+	assert.Equal(t, 404, w.Code)
 }
 
 func TestRouterHandle(t *testing.T) {
@@ -98,11 +127,11 @@ func TestRouterHandle(t *testing.T) {
 	r.OPTIONS("/robot/not/:uid", handle_index)
 
 	print_store_tree_root(t, r, http.MethodGet)
-	print_store_tree_root(t, r, http.MethodPost)
-	print_store_tree_root(t, r, http.MethodHead)
-	print_store_tree_root(t, r, http.MethodOptions)
-	print_store_tree_root(t, r, http.MethodPut)
-	print_store_tree_root(t, r, http.MethodDelete)
+	//print_store_tree_root(t, r, http.MethodPost)
+	//print_store_tree_root(t, r, http.MethodHead)
+	//print_store_tree_root(t, r, http.MethodOptions)
+	//print_store_tree_root(t, r, http.MethodPut)
+	//print_store_tree_root(t, r, http.MethodDelete)
 }
 
 func print_store_tree_root(t *testing.T, r Router, method string) {
@@ -118,12 +147,13 @@ func print_store_tree_node(t *testing.T, node Node, depth int) {
 	if node == nil {
 		return
 	}
-	fmt.Println(get_copy_tree_depth([]byte(" "), depth*2), "|__", node.GetIndices(), "param:", node.GetKeys(), "nodeType:", node.GetType())
+	fmt.Println(get_copy_tree_depth([]byte(" "), depth*2), "|__", node.GetIndices(), "param:", node.GetKeys(), "nodeType:", node.GetType(), "path", node.GetPath())
 	children := node.GetChildren()
 	if len(children) == 0 {
 		return
 	}
 	for _, v := range children {
+		//fmt.Println("children key -----", key)
 		print_store_tree_node(t, v, depth+1)
 	}
 }

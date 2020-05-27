@@ -5,7 +5,7 @@ package grouter
 // just for test.
 // finish an simple http engine for test Exeucter interface
 import (
-	"io"
+	//"io"
 	"net/http"
 	"sync"
 )
@@ -13,7 +13,7 @@ import (
 // test Context
 type Context struct {
 	http_request *http.Request
-	response     io.Writer //http.ResponseWriter
+	response     http.ResponseWriter
 }
 
 func (ctx *Context) SetRequest(value interface{}) bool {
@@ -32,12 +32,16 @@ func (ctx *Context) GetRequest(type_str string) interface{} {
 	return nil
 }
 
-func (ctx *Context) SetResponseWriter(writer io.Writer) {
-	ctx.response = writer
+func (ctx *Context) SetResponseWriter(writer interface{}) {
+	ctx.response = writer.(http.ResponseWriter)
 }
 
-func (ctx *Context) GetResponseWriter(type_str string) io.Writer {
+func (ctx *Context) GetResponseWriter() interface{} {
 	return ctx.response
+}
+
+func (ctx *Context) GetHttpResponse() http.ResponseWriter {
+	return ctx.response.(http.ResponseWriter)
 }
 
 func (ctx *Context) Get(key string) interface{} {
@@ -59,7 +63,13 @@ func (ctx *Context) Reset() {
 }
 
 func (ctx *Context) Status(code int) {
+	if ctx.response == nil {
+		return
+	}
+	ctx.response.WriteHeader(code)
 }
+
+var _ Contexter = &Context{}
 
 // -=================================================================================
 

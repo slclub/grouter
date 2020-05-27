@@ -27,3 +27,17 @@ func TestStoreCreate(t *testing.T) {
 
 	assert.Nil(t, root.GetNodeAuto(1))
 }
+
+func TestNodeSomeMethodSure(t *testing.T) {
+	st := NewStore()
+	root, _ := st.Lookup("ANY")
+	assert.Equal(t, "", root.GetPath())
+
+	nd := st.CreateNode(0)
+	nd.SetPath("/find/you")
+	nd.SetType(NODE_T_PATH)
+	assert.Equal(t, "/find/you", nd.GetPath())
+	assert.Equal(t, NODE_T_PATH, nd.GetType())
+	nd.AddKey([]string{"ab", "bc", "cd"})
+	assert.Equal(t, 3, len(nd.GetKeys()))
+}

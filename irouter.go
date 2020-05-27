@@ -1,8 +1,8 @@
 package grouter
 
 import (
-	"io"
-	//"net/http"
+	//"io"
+	"net/http"
 )
 
 // ====================================================================================
@@ -39,8 +39,9 @@ type Requester interface {
 
 // response to client or other server.
 type Responser interface {
-	GetResponseWriter(type_str string) io.Writer
-	SetResponseWriter(io.Writer)
+	GetResponseWriter() interface{}
+	GetHttpResponse() http.ResponseWriter
+	SetResponseWriter(interface{})
 }
 
 //====================================================================================

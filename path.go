@@ -92,6 +92,7 @@ func (u *urldecoder) CaseSensitive(status bool) {
 
 // parse client request url. example http request.
 func (u *urldecoder) Decode(path string) (int, string, interface{}) {
+	// return PATH_T_COMMON, path, ""
 	// TODO: encoding url  %f etc convert to string.
 	//
 	// 加号处理可以提供方法尽量不在这里处理，会影响性能
@@ -103,6 +104,8 @@ func (u *urldecoder) Decode(path string) (int, string, interface{}) {
 	return path_type, string(path_buf), param_str
 }
 
+// benchmark testing
+// take 2 alloc/op
 func (u *urldecoder) convPath(path string) ([]byte, string, int) {
 	lenp := len(path)
 	if lenp > 0 && path[0] == '*' {

@@ -2,10 +2,10 @@ package grouter
 
 import (
 	//"errors"
-	//"errors"
 	"fmt"
 	"github.com/slclub/link"
 	"net/http"
+	"net/url"
 )
 
 func init() {
@@ -161,7 +161,11 @@ func (r *router) Execute(ctx Contexter) {
 	var req *http.Request
 	req = ctx.GetRequest("http").(*http.Request)
 	http_method := req.Method
-	path_type, path, params_str := r.GetDecoder().Decode(req.URL.Path)
+	// Reduces empty request performance by half.
+	// also need to QueryUnescape the param
+	//path_type, path, params_str := r.GetDecoder().Decode(req.URL.String())
+	//path_type, path, params_str := r.GetDecoder().Decode(req.URL.Path)
+	path_type, path, _ := r.GetDecoder().Decode(req.URL.Path)
 
 	var root Node
 	var nothing string
@@ -179,20 +183,21 @@ func (r *router) Execute(ctx Contexter) {
 		return
 	}
 
-	if path_type == PATH_T_QUESTION {
-		node, left_path := root.Lookup(path)
-		if node == nil {
-			goto WALK_404
-		}
-		handle := node.GetHandleFunc()
-		if left_path != "" || handle == nil {
-			goto WALK_404
-		}
+	//fmt.Println("---------sys type", PATH_T_QUESTION, "-------------", path_type, "path", path, "URL.Path:", req.URL.Path)
+	//if path_type == PATH_T_QUESTION {
+	//	node, left_path := root.Lookup(path)
+	//	if node == nil {
+	//		goto WALK_404
+	//	}
+	//	handle := node.GetHandleFunc()
+	//	if left_path != "" || handle == nil {
+	//		goto WALK_404
+	//	}
 
-		node.ParseParams(ctx, path_type, params_str.(string))
-		// test
-		handle(ctx)
-	}
+	//	node.ParseParams(ctx, path_type, params_str.(string))
+	//	// test
+	//	handle(ctx)
+	//}
 
 	if path_type == PATH_T_COMMON {
 		node, left_path := root.Lookup(path)
@@ -203,12 +208,19 @@ func (r *router) Execute(ctx Contexter) {
 		if handle == nil {
 			goto WALK_404
 		}
-		node.ParseParams(ctx, path_type, left_path)
+		param_str, err := url.QueryUnescape(left_path)
+		if err != nil {
+			param_str = left_path
+		}
+		node.ParseParams(ctx, path_type, param_str)
 		// test
 		handle(ctx)
 
 	}
-	//TODO: return process node. include handle param and scope.
+	// TODO: get param from net/url.URL.Query()
+	// TODO: get param from req.ParseForm.
+	// TODO: query param etc.
+	// TODO: return process node. include handle param and scope.
 	return
 WALK_404:
 	not_handle := r.CodeHandle(http.StatusNotFound)
@@ -228,17 +240,18 @@ WALK_404:
 // =========================================code handle func ===============================================
 func http_404_handle(ctx Contexter) {
 	ctx.Status(http.StatusNotFound)
-	ctx.GetResponseWriter("http").Write([]byte("404 not found"))
+	ctx.GetHttpResponse().Write([]byte("404 not found"))
 
+	fmt.Println("---------------handle-not found--------------------")
 }
 
 func http_405_handle(ctx Contexter) {
 	ctx.Status(http.StatusMethodNotAllowed)
-	ctx.GetResponseWriter("http").Write([]byte("405 not not allowed!"))
+	ctx.GetHttpResponse().Write([]byte("405 not not allowed!"))
 }
 
 func http_500_handle(ctx Contexter) {
 	ctx.Status(http.StatusInternalServerError)
-	ctx.GetResponseWriter("http").Write([]byte("500 server internal error!"))
+	ctx.GetHttpResponse().Write([]byte("500 server internal error!"))
 	link.ERROR("[500] server internal error!")
 }

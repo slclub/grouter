@@ -19,6 +19,8 @@ func BenchmarkFirst(B *testing.B) {
 	})
 
 	url3 := "/common/static/book?a=1&b=2"
+	app.router.GET(url3, func(ctx Contexter) {
+	})
 
 	//run_request(B, app, "GET", url1)
 	run_request(B, app, "GET", url2)

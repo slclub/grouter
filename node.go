@@ -1,8 +1,8 @@
 package grouter
 
 import (
-	//"fmt"
 	"bytes"
+	//"fmt"
 	"net/http"
 	"strings"
 )
@@ -173,6 +173,8 @@ func (nd *node) GetNodeStr(indices string) Node {
 
 func (nd *node) AddNode(one Node) bool {
 	indices := lowercase(one.GetIndices())
+
+	//fmt.Println("--------AddNode------", indices, one.GetIndices())
 	if nd.children[indices] != nil {
 		return false
 	}
@@ -225,6 +227,7 @@ func (nd *node) Lookup(path string) (Node, string) {
 		if path[i] != '/' || i == 0 {
 			continue
 		}
+
 		//next = head.GetNodeAuto(lowercase(path[begin:i]))
 		next = head.GetNodeAuto(string(buf.Bytes()[begin:i]))
 		if next == nil {
@@ -335,7 +338,7 @@ func (nd *node) AddRoute(path string, handle HandleFunc, param_keys []string) {
 		return
 	}
 
-	//fmt.Println("--------AddRoute", path, "left path:", path_l)
+	// fmt.Println("--------AddRoute", path, "left path:", path_l)
 	// Second condition was supported for "/" .
 	if path_l == "" || (path_l == "/" && path != path_l) {
 		panic("[ERROR][GROUTER][ADD_ROUTE]PATH_EXIST[" + path + "]LEFT_PATH[" + path_l + "]")
@@ -349,6 +352,7 @@ func (nd *node) AddRoute(path string, handle HandleFunc, param_keys []string) {
 	}
 
 	next := head
+	next.SetType(NODE_T_WILD)
 	if lenp >= 2 && path_l_slice[0] == "" {
 		path_l_slice = path_l_slice[1:]
 		lenp--
@@ -356,31 +360,42 @@ func (nd *node) AddRoute(path string, handle HandleFunc, param_keys []string) {
 
 	//fmt.Println("--------AddRoute", path, "left path:", path_l)
 	for i, indices := range path_l_slice {
-		next.SetType(NODE_T_WILD)
-		next.SetIndices("/" + indices)
+		if indices == "" {
+			break
+		}
+		if i == 0 {
+			head.SetType(NODE_T_WILD)
+			head.SetIndices("/" + indices)
+			continue
+		}
+
 		// that is our need node.
 		// first condition is ready for "/"
 		// second condition checked whether it is a leaf node.
-		if indices == "" || i+2 == lenp {
-			ok := f_node.AddNode(head)
-			// there should be no such situation. if there is, there is a problem with previous procedure.
-			if !ok {
-				panic("[ERROR][GROUTER][ADD_NODE][CHILD_EXIST]CHILD_KEY[" + head.GetIndices() + "]RANGE[" + string(i) + "]")
-			}
-			next.AddKey(param_keys)
-			next.SetPath(path)
-			next.SetType(NODE_T_PATH)
-			next.SetHandleFunc(handle)
-			break
-		}
+
 		// not a leaf node. create a wild node.
 		next_tmp := &node{
 			children: make(map[string]Node),
 		}
+		next_tmp.SetType(NODE_T_WILD)
+		next_tmp.SetIndices("/" + indices)
+
 		// link with before.
 		next.AddNode(next_tmp)
 		next = next_tmp
+		//next.SetIndices("/" + indices)
 	}
+
+	ok := f_node.AddNode(head)
+	// there should be no such situation. if there is, there is a problem with previous procedure.
+	if !ok {
+		panic("[ERROR][GROUTER][ADD_NODE][CHILD_EXIST]CHILD_KEY[" + head.GetIndices() + "]")
+	}
+	next.AddKey(param_keys)
+	next.SetPath(path)
+	next.SetType(NODE_T_PATH)
+	next.SetHandleFunc(handle)
+
 }
 
 func (nd *node) GetChildren() map[string]Node {
