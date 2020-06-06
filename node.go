@@ -3,6 +3,7 @@ package grouter
 import (
 	"bytes"
 	//"fmt"
+	"github.com/slclub/gnet"
 	"net/http"
 	"strings"
 )
@@ -52,7 +53,7 @@ type nodeStore struct {
 type node struct {
 	path     string
 	n_type   uint8
-	handle   HandleFunc
+	handle   gnet.HandleFunc
 	indices  string
 	children map[string]Node
 	keys     []string
@@ -136,11 +137,11 @@ func (nd *node) SetType(n_type uint8) {
 	nd.n_type = n_type
 }
 
-func (nd *node) SetHandleFunc(handle HandleFunc) {
+func (nd *node) SetHandleFunc(handle gnet.HandleFunc) {
 	nd.handle = handle
 }
 
-func (nd *node) GetHandleFunc() HandleFunc {
+func (nd *node) GetHandleFunc() gnet.HandleFunc {
 	return nd.handle
 }
 
@@ -246,7 +247,7 @@ func (nd *node) Lookup(path string) (Node, string) {
 }
 
 // url param pase to ParamterArray.
-func (nd *node) ParseParams(pa ParameterArray, path_type int, param_str string) {
+func (nd *node) ParseParams(pa gnet.Contexter, path_type int, param_str string) {
 	// url: /xxx?param1=v  url question mark request
 	// it is not necessary to sort  by  keys of node.
 	if path_type == PATH_T_QUESTION {
@@ -319,7 +320,7 @@ func (nd *node) getKey(key interface{}) (string, int) {
 }
 
 // implement store.AddRoute
-func (nd *node) AddRoute(path string, handle HandleFunc, param_keys []string) {
+func (nd *node) AddRoute(path string, handle gnet.HandleFunc, param_keys []string) {
 	//fmt.Println("--------AddRoute", path)
 	f_node, path_l := nd.Lookup(path)
 

@@ -3,6 +3,7 @@ package grouter
 import (
 	"bytes"
 	"fmt"
+	"github.com/slclub/gnet"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
@@ -31,13 +32,12 @@ func TestCodeFunctions(t *testing.T) {
 func TestHttpRouterListen(t *testing.T) {
 	engine := NewEngine()
 	// and support URL path captial leter.
-	engine.router.GET("/ping/:uid", func(ctx Contexter) {
+	engine.router.GET("/ping/:uid", func(ctx gnet.Contexter) {
 		ctx.Get("wo")
-		ctx.GetAll()
 		// dont implement to here so
 		ctx.GetString("uid")
 		//fmt.Println("/ping/:uid", "path:", ctx.GetRequest("http").(*http.Request).URL.Path)
-		assert.Equal(t, "/ping/xiaoming", lowercase(ctx.GetRequest("http").(*http.Request).URL.Path))
+		assert.Equal(t, "/ping/xiaoming", lowercase(ctx.Request().GetHttpRequest().URL.Path))
 	})
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/Ping/xiaoming", nil)
@@ -48,8 +48,8 @@ func TestHttpRouterListen(t *testing.T) {
 
 func TestRouterHandleQuestion(t *testing.T) {
 	r := NewRouter()
-	var handle_index HandleFunc = func(ctx Contexter) {
-		ctx.Status(http.StatusOK)
+	var handle_index gnet.HandleFunc = func(ctx gnet.Contexter) {
+		ctx.Response().WriteHeader(http.StatusOK)
 	}
 	r.GET("/robot/list?a=1&b=2", handle_index)
 	r.GET("/robot/book?a=1&b=2", handle_index)
@@ -59,8 +59,8 @@ func TestRouterHandleQuestion(t *testing.T) {
 
 func TestRouterQuestionHttp(t *testing.T) {
 	engine := NewEngine()
-	var handle_index HandleFunc = func(ctx Contexter) {
-		ctx.Status(http.StatusOK)
+	var handle_index gnet.HandleFunc = func(ctx gnet.Contexter) {
+		ctx.Response().WriteHeader(http.StatusOK)
 	}
 	engine.router.GET("/robot/list", handle_index)
 	w := httptest.NewRecorder()
@@ -73,8 +73,8 @@ func TestRouterQuestionHttp(t *testing.T) {
 }
 func TestRouterQuestionEncodeUrl(t *testing.T) {
 	engine := NewEngine()
-	var handle_index HandleFunc = func(ctx Contexter) {
-		ctx.Status(http.StatusOK)
+	var handle_index gnet.HandleFunc = func(ctx gnet.Contexter) {
+		ctx.Response().WriteHeader(http.StatusOK)
 	}
 	engine.router.GET("/news/analysis", handle_index)
 	w := httptest.NewRecorder()
@@ -88,8 +88,9 @@ func TestRouterQuestionEncodeUrl(t *testing.T) {
 
 func TestRouter404(t *testing.T) {
 	engine := NewEngine()
-	var handle_list HandleFunc = func(ctx Contexter) {
-		ctx.Status(404)
+	var handle_list gnet.HandleFunc = func(ctx gnet.Contexter) {
+		ctx.Response().WriteHeader(404)
+		ctx.Response().Flush()
 	}
 	engine.router.GET("/robot/list?a=1&b=2", handle_list)
 	w := httptest.NewRecorder()
@@ -101,8 +102,8 @@ func TestRouter404(t *testing.T) {
 func TestRouterHandle(t *testing.T) {
 	r := NewRouter()
 	r.SetStore(NewStore())
-	var handle_index HandleFunc = func(ctx Contexter) {
-		ctx.Status(http.StatusOK)
+	var handle_index gnet.HandleFunc = func(ctx gnet.Contexter) {
+		ctx.Response().WriteHeader(http.StatusOK)
 	}
 	r.GET("/index", handle_index)
 	r.GET("/robot/list", handle_index)

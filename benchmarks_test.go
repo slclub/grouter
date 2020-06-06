@@ -2,6 +2,7 @@ package grouter
 
 import (
 	//"fmt"
+	"github.com/slclub/gnet"
 	"net/http"
 	"testing"
 )
@@ -11,15 +12,15 @@ import (
 func BenchmarkFirst(B *testing.B) {
 	app := NewEngine()
 	url1 := "/common/static/rest/get/ping"
-	app.router.GET(url1, func(ctx Contexter) {
+	app.router.GET(url1, func(ctx gnet.Contexter) {
 		//fmt.Println("ping!")
 	})
 	url2 := "/common/static/ok/r1/r2/r3/r4/r5"
-	app.router.GET(url2, func(ctx Contexter) {
+	app.router.GET(url2, func(ctx gnet.Contexter) {
 	})
 
 	url3 := "/common/static/book?a=1&b=2"
-	app.router.GET(url3, func(ctx Contexter) {
+	app.router.GET(url3, func(ctx gnet.Contexter) {
 	})
 
 	//run_request(B, app, "GET", url1)

@@ -3,6 +3,7 @@ package grouter
 import (
 	//"errors"
 	"fmt"
+	"github.com/slclub/gnet"
 	"github.com/slclub/link"
 	"net/http"
 	"net/url"
@@ -15,7 +16,7 @@ func init() {
 type router struct {
 	store        Store
 	decoder      Path
-	code_handles map[int]HandleFunc
+	code_handles map[int]gnet.HandleFunc
 }
 
 //type param struct {
@@ -46,7 +47,7 @@ func NewRouter() Router {
 	r := &router{
 		store:        NewStore(),
 		decoder:      NewPath(),
-		code_handles: make(map[int]HandleFunc),
+		code_handles: make(map[int]gnet.HandleFunc),
 	}
 	//bind code handle
 	r.BindCodeHandle(http.StatusNotFound, http_404_handle)
@@ -87,11 +88,11 @@ func (r *router) check(path string) (bool, error) {
 	return true, nil
 }
 
-func (r *router) CodeHandle(error_code int) HandleFunc {
+func (r *router) CodeHandle(error_code int) gnet.HandleFunc {
 	return r.code_handles[error_code]
 }
 
-func (r *router) BindCodeHandle(error_code int, handle HandleFunc) {
+func (r *router) BindCodeHandle(error_code int, handle gnet.HandleFunc) {
 	if handle == nil {
 		return
 	}
@@ -100,33 +101,33 @@ func (r *router) BindCodeHandle(error_code int, handle HandleFunc) {
 
 // ------------------------------------------shortcut-start------------------------------------------------
 // shortcut for router.Handle
-func (r *router) GET(path string, handle HandleFunc) {
+func (r *router) GET(path string, handle gnet.HandleFunc) {
 	r.Handle(http.MethodGet, path, handle)
 }
 
-func (r *router) HEAD(path string, handle HandleFunc) {
+func (r *router) HEAD(path string, handle gnet.HandleFunc) {
 	r.Handle(http.MethodHead, path, handle)
 }
-func (r *router) OPTIONS(path string, handle HandleFunc) {
+func (r *router) OPTIONS(path string, handle gnet.HandleFunc) {
 	r.Handle(http.MethodOptions, path, handle)
 }
-func (r *router) POST(path string, handle HandleFunc) {
+func (r *router) POST(path string, handle gnet.HandleFunc) {
 	r.Handle(http.MethodPost, path, handle)
 }
-func (r *router) PUT(path string, handle HandleFunc) {
+func (r *router) PUT(path string, handle gnet.HandleFunc) {
 	r.Handle(http.MethodPut, path, handle)
 }
-func (r *router) PATCH(path string, handle HandleFunc) {
+func (r *router) PATCH(path string, handle gnet.HandleFunc) {
 	r.Handle(http.MethodPatch, path, handle)
 }
-func (r *router) DELETE(path string, handle HandleFunc) {
+func (r *router) DELETE(path string, handle gnet.HandleFunc) {
 	r.Handle(http.MethodDelete, path, handle)
 }
 
 // ------------------------------------------shortcut-end--------------------------------------------------
 
 // implement Router.Handle
-func (r *router) Handle(method, path string, handle HandleFunc) {
+func (r *router) Handle(method, path string, handle gnet.HandleFunc) {
 	if method == "" {
 		panic("[ERROR][ROUTER][HANDLE] method is empty")
 	}
@@ -157,9 +158,9 @@ func (r *router) Handle(method, path string, handle HandleFunc) {
 
 // request execute
 // when a client request, this function will be called.
-func (r *router) Execute(ctx Contexter) {
+func (r *router) Execute(ctx gnet.Contexter) {
 	var req *http.Request
-	req = ctx.GetRequest("http").(*http.Request)
+	req = ctx.Request().GetHttpRequest()
 	http_method := req.Method
 	// Reduces empty request performance by half.
 	// also need to QueryUnescape the param
@@ -238,20 +239,25 @@ WALK_404:
 //}
 
 // =========================================code handle func ===============================================
-func http_404_handle(ctx Contexter) {
-	ctx.Status(http.StatusNotFound)
-	ctx.GetHttpResponse().Write([]byte("404 not found"))
+func http_404_handle(ctx gnet.Contexter) {
+	ctx.Response().WriteHeader(http.StatusNotFound)
+	ctx.Response().Write([]byte("404 not found"))
+	//ctx.Response().Flush()
+	//ctx.Response().InitSelf(nil)
 
 	fmt.Println("---------------handle-not found--------------------")
 }
 
-func http_405_handle(ctx Contexter) {
-	ctx.Status(http.StatusMethodNotAllowed)
-	ctx.GetHttpResponse().Write([]byte("405 not not allowed!"))
+func http_405_handle(ctx gnet.Contexter) {
+	ctx.Response().WriteHeader(http.StatusMethodNotAllowed)
+	ctx.Response().Write([]byte("405 not not allowed!"))
+	//ctx.Response().Flush()
 }
 
-func http_500_handle(ctx Contexter) {
-	ctx.Status(http.StatusInternalServerError)
-	ctx.GetHttpResponse().Write([]byte("500 server internal error!"))
+func http_500_handle(ctx gnet.Contexter) {
+	ctx.Response().WriteHeader(http.StatusInternalServerError)
+	ctx.Response().Write([]byte("500 server internal error!"))
+
+	//ctx.Response().Flush()
 	link.ERROR("[500] server internal error!")
 }
