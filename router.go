@@ -3,6 +3,7 @@ package grouter
 import (
 	//"errors"
 	"fmt"
+	"github.com/slclub/gcore/flow"
 	"github.com/slclub/gnet"
 	"github.com/slclub/link"
 	"net/http"
@@ -14,6 +15,7 @@ func init() {
 }
 
 type router struct {
+	flow.ExecuteNode
 	store        Store
 	decoder      Path
 	code_handles map[int]gnet.HandleFunc

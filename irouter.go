@@ -2,6 +2,7 @@ package grouter
 
 import (
 	//"io"
+	"github.com/slclub/gcore/flow"
 	"github.com/slclub/gnet"
 	"net/http"
 )
@@ -14,7 +15,7 @@ import (
 // router haddle func
 
 type Router interface {
-
+	flow.IExecuteNode
 	// path router store get and set.
 	GetStore() Store
 	SetStore(Store)
@@ -24,7 +25,7 @@ type Router interface {
 	SetDecoder(Path)
 
 	Handle(string, string, gnet.HandleFunc)
-	Execute(gnet.Contexter)
+	//Execute(gnet.Contexter)
 	// Handle shortcut
 	// Handle(string, string, HandleFunc)
 	GET(string, gnet.HandleFunc)
