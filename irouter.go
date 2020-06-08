@@ -3,6 +3,7 @@ package grouter
 import (
 	//"io"
 	"github.com/slclub/gnet"
+	"net/http"
 )
 
 //====================================================================================
@@ -40,6 +41,8 @@ type Router interface {
 	// the rest of the error code should have handle function defined.
 	CodeHandle(int) gnet.HandleFunc
 	BindCodeHandle(int, gnet.HandleFunc)
+	// static file server.
+	ServerFile(string, http.FileSystem)
 }
 
 // --------------------------------------------------------------------------------------

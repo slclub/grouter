@@ -156,6 +156,14 @@ func (r *router) Handle(method, path string, handle gnet.HandleFunc) {
 
 }
 
+// static serve file system.
+func (r *router) ServerFile(path string, root_fs http.FileSystem) {
+	file_server := http.FileServer(root_fs)
+	r.GET(path, func(ctx gnet.Contexter) {
+		file_server.ServeHTTP(ctx.Response(), ctx.Request().GetHttpRequest())
+	})
+}
+
 // request execute
 // when a client request, this function will be called.
 func (r *router) Execute(ctx gnet.Contexter) {
@@ -170,6 +178,8 @@ func (r *router) Execute(ctx gnet.Contexter) {
 
 	var root Node
 	var nothing string
+
+WALK_AGAIN:
 	if path_type > 0 {
 		root, nothing = r.GetStore().Lookup(http_method)
 	}
@@ -180,6 +190,7 @@ func (r *router) Execute(ctx gnet.Contexter) {
 			//handle()
 			return
 		}
+		ctx.SetHandler(handle)
 		link.ERROR("[GROUTER]", nothing)
 		return
 	}
@@ -203,6 +214,11 @@ func (r *router) Execute(ctx gnet.Contexter) {
 	if path_type == PATH_T_COMMON {
 		node, left_path := root.Lookup(path)
 		if node == nil {
+			// here support ANY method.
+			if http_method != "ANY" && http_method != http.MethodConnect && http_method != http.MethodOptions {
+				http_method = "ANY"
+				goto WALK_AGAIN
+			}
 			goto WALK_404
 		}
 		handle := node.GetHandleFunc()
@@ -215,8 +231,9 @@ func (r *router) Execute(ctx gnet.Contexter) {
 		}
 		node.ParseParams(ctx, path_type, param_str)
 		// test
-		handle(ctx)
+		//handle(ctx)
 
+		ctx.SetHandler(handle)
 	}
 	// TODO: get param from net/url.URL.Query()
 	// TODO: get param from req.ParseForm.
@@ -228,8 +245,8 @@ WALK_404:
 	if not_handle == nil {
 		return
 	}
-	not_handle(ctx)
-
+	//not_handle(ctx)
+	ctx.SetHandler(not_handle)
 }
 
 // for test. cover test.
