@@ -295,6 +295,10 @@ func (nd *node) ParseParams(pa gnet.Contexter, path_type int, param_str string) 
 			begin = i + 1
 			key, _ = nd.getKey(record)
 			record++
+			// key could not be empty.
+			if key == "" {
+				continue
+			}
 			pa.SetParam(key, value)
 			key, value = "", ""
 		}
@@ -313,13 +317,13 @@ func (nd *node) getKey(key interface{}) (string, int) {
 	}
 
 	// here not was invoked.
-	if k, ok := key.(string); ok {
-		for i, v := range nd.keys {
-			if v == k {
-				return v, i
-			}
-		}
-	}
+	//if k, ok := key.(string); ok {
+	//	for i, v := range nd.keys {
+	//		if v == k {
+	//			return v, i
+	//		}
+	//	}
+	//}
 	return "", -1
 
 }
@@ -330,9 +334,10 @@ func (nd *node) AddRoute(path string, handle gnet.HandleFunc, param_keys []strin
 	f_node, path_l := nd.Lookup(path)
 
 	// It must have error before add route. please check if in route handle.
-	if f_node == nil {
-		panic("[ERROR][GROUTE][FOUND_ROOT_NODE]")
-	}
+	// Lookup will return itself if it dose not found any suit node.
+	// if f_node == nil {
+	// 	panic("[ERROR][GROUTE][FOUND_ROOT_NODE]")
+	// }
 
 	// it is wild node and perfect match the path.
 	// this node can convert to path node.

@@ -112,6 +112,7 @@ func TestRouterHandle(t *testing.T) {
 	r.GET("/robot/get/:uid", handle_index)
 	r.GET("/robot/update/:uid", handle_index)
 	r.GET("/robot/not/:uid", handle_index)
+	r.ServerFile("/st/", http.Dir("."))
 
 	r.POST("/post", handle_index)
 	r.POST("/robot/list", handle_index)

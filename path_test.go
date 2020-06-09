@@ -12,11 +12,17 @@ func TestPathParse(t *testing.T) {
 	var path_arr = [][]string{
 		{"/abc", "/abc/"},
 		{"/abc/:uid", "/abc/"},
+		{"/abc?a=1&b=2", "/abc/"},
+		{"//abc?a=1&b=2", "/abc/"},
+		{"/abc?", "/abc/"},
 	}
 	for _, v := range path_arr {
 		result, _ := path_decoder.Parse(v[0])
 		assert.Equal(t, v[1], result)
 	}
+
+	// panics
+	assert.Panics(t, func() { path_decoder.Parse("") })
 }
 
 // test path decode

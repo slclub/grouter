@@ -138,10 +138,13 @@ func (r *router) Handle(method, path string, handle gnet.HandleFunc) {
 		panic("[ERROR][ROUTER][HANDLE] method is empty")
 	}
 
-	if ok, err := r.check(path); !ok {
-		link.ERROR(err)
-		return
-	}
+	// not pass panic
+	r.check(path)
+
+	//if ok, err := r.check(path); !ok {
+	//	link.ERROR(err)
+	//	return
+	//}
 
 	if handle == nil {
 		link.ERROR("[ROUTE]HandleFunc is empty!")
@@ -237,11 +240,13 @@ WALK_AGAIN:
 			}
 			goto WALK_404
 		}
-		param_str, err := url.QueryUnescape(left_path)
-		if err != nil {
-			param_str = left_path
+		if left_path != "/" {
+			param_str, err := url.QueryUnescape(left_path)
+			if err != nil {
+				param_str = left_path
+			}
+			node.ParseParams(ctx, path_type, param_str)
 		}
-		node.ParseParams(ctx, path_type, param_str)
 		// test
 		//handle(ctx)
 
@@ -278,7 +283,7 @@ WALK_404:
 // =========================================code handle func ===============================================
 func http_404_handle(ctx gnet.Contexter) {
 	ctx.Response().WriteHeader(http.StatusNotFound)
-	ctx.Response().Write([]byte("404 not found"))
+	ctx.Response().Write([]byte("grouter 404 not found"))
 	//ctx.Response().Flush()
 	//ctx.Response().InitSelf(nil)
 
@@ -287,13 +292,13 @@ func http_404_handle(ctx gnet.Contexter) {
 
 func http_405_handle(ctx gnet.Contexter) {
 	ctx.Response().WriteHeader(http.StatusMethodNotAllowed)
-	ctx.Response().Write([]byte("405 not not allowed!"))
+	ctx.Response().Write([]byte("grouter 405 not not allowed!"))
 	//ctx.Response().Flush()
 }
 
 func http_500_handle(ctx gnet.Contexter) {
 	ctx.Response().WriteHeader(http.StatusInternalServerError)
-	ctx.Response().Write([]byte("500 server internal error!"))
+	ctx.Response().Write([]byte("grouter 500 server internal error!"))
 
 	//ctx.Response().Flush()
 	link.ERROR("[500] server internal error!")
