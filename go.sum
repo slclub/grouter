@@ -149,12 +149,10 @@ github.com/slclub/gerror v0.0.0-20200605170533-056a97d00f25 h1:d/tZOF+7PFsSL1jDD
 github.com/slclub/gerror v0.0.0-20200605170533-056a97d00f25/go.mod h1:H4sTdpeFUJMjN6atbfOLBQfdpptVYCfrBNPp90TEPRE=
 github.com/slclub/glog v0.0.7 h1:r/2kjlPox3+rUUERnb0fRBioi2okq0llkEbsjBdcR8M=
 github.com/slclub/glog v0.0.7/go.mod h1:YyfJjB65+XyJku9SbSxNtEoNh0TYC/lkKmJ0FW99TaU=
-github.com/slclub/gnet v0.0.0-20200606130532-534993feda30 h1:aebZeJEAxtXJ9euMvDq9qpqBuDun6vfAfHVJJedaZ/c=
-github.com/slclub/gnet v0.0.0-20200606130532-534993feda30/go.mod h1:Rq2Nutl5pLxK/AkwGIWsVKurz8FcNbbC15ITH+oHiSA=
-github.com/slclub/gnet v0.0.0-20200608071957-121bcf6989e5 h1:d+zyCHYjG7mR0yp98Psj3EXimSvEA1yKRYZNt+7X83o=
 github.com/slclub/gnet v0.0.0-20200608071957-121bcf6989e5/go.mod h1:Rq2Nutl5pLxK/AkwGIWsVKurz8FcNbbC15ITH+oHiSA=
-github.com/slclub/gnet v0.0.0-20200608151655-c61c371a6ee5 h1:L46YevfOv/bo9/6ZCUhNdKyCpRUhFbMu3lqJd4rDJyo=
 github.com/slclub/gnet v0.0.0-20200608151655-c61c371a6ee5/go.mod h1:Rq2Nutl5pLxK/AkwGIWsVKurz8FcNbbC15ITH+oHiSA=
+github.com/slclub/gnet v0.0.0-20200609121958-da0a67fe8fe3 h1:9f+5uJEzXASMmtZxAzLC1mMINsTumFdGXThoj1tIrMQ=
+github.com/slclub/gnet v0.0.0-20200609121958-da0a67fe8fe3/go.mod h1:Rq2Nutl5pLxK/AkwGIWsVKurz8FcNbbC15ITH+oHiSA=
 github.com/slclub/goqueue v0.0.4 h1:2lyYr243RLUYdrcv7KCHmRwfQVjXHt86O61hav/co7A=
 github.com/slclub/goqueue v0.0.4/go.mod h1:5Pm6g6fWEMUZTQvZqUHyKygdV4VEqHO3joxCoDYFj5Q=
 github.com/slclub/grouter v0.0.0-20200608154541-6a3fcf1718e0/go.mod h1:biIOH/sx78aJxd6Oc9Ho/svruy2IW/GBFR7FugHvLIA=
@@ -162,7 +160,6 @@ github.com/slclub/link v0.0.0-20200605085902-9e7733b41a86 h1:VmVPzAK8CunO5CCBdex
 github.com/slclub/link v0.0.0-20200605085902-9e7733b41a86/go.mod h1:sgajmBtcnGK5EOEFFj+e10XReEc4G8O/mLHt2i+HMm0=
 github.com/slclub/utils v0.0.0-20200528050629-ce1b1f9fff5d/go.mod h1:+gWlPXvzOkXO5N6/cNdUYikqW6uVZ8guo32Nr5cXJ7k=
 github.com/slclub/utils v0.0.0-20200528131235-19203b312030/go.mod h1:kNRSxpk2+ppQ1gMBvteenzrJVSYZZowdLkSmr1h9GS8=
-github.com/slclub/utils v0.0.0-20200605104419-7c88bff621a6 h1:HJSA0Zl4nHP1Hd7ZJgbs3ulG+wBQo0otc7pvwMxr2bM=
 github.com/slclub/utils v0.0.0-20200605104419-7c88bff621a6/go.mod h1:kNRSxpk2+ppQ1gMBvteenzrJVSYZZowdLkSmr1h9GS8=
 github.com/slclub/utils v0.0.0-20200608114939-05b222649325 h1:Q/dp0w06tTM/fU+2AUuek0t2kizxswsjf9tg+2ZKIZc=
 github.com/slclub/utils v0.0.0-20200608114939-05b222649325/go.mod h1:kNRSxpk2+ppQ1gMBvteenzrJVSYZZowdLkSmr1h9GS8=
@@ -184,7 +181,6 @@ github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+
 github.com/stretchr/objx v0.1.1/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
-github.com/stretchr/testify v1.5.1 h1:nOGnQDM7FYENwehXlg/kFVnos3rEvtKTjRvOWSzb6H4=
 github.com/stretchr/testify v1.5.1/go.mod h1:5W2xD1RspED5o8YsWQXVCued0rvSQ+mT+I5cxcmMvtA=
 github.com/stretchr/testify v1.6.1 h1:hDPOHmpOpP40lSULcqw7IrRb/u7w6RpDC9399XyoNd0=
 github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=

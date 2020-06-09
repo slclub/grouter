@@ -32,15 +32,19 @@ func TestCodeFunctions(t *testing.T) {
 func TestHttpRouterListen(t *testing.T) {
 	engine := NewEngine()
 	// and support URL path captial leter.
-	engine.router.GET("/ping/:uid", func(ctx gnet.Contexter) {
+	engine.router.GET("/test/ping/:uid/:sex", func(ctx gnet.Contexter) {
 		ctx.Get("wo")
 		// dont implement to here so
-		ctx.GetString("uid")
-		//fmt.Println("/ping/:uid", "path:", ctx.GetRequest("http").(*http.Request).URL.Path)
-		assert.Equal(t, "/ping/xiaoming", lowercase(ctx.Request().GetHttpRequest().URL.Path))
+		uid, _ := ctx.Request().GetString("uid")
+		sex, _ := ctx.Request().GetString("sex")
+		assert.Equal(t, "xiaoming", uid)
+		fmt.Println("/ping/:uid/:sex", "path:", uid, sex)
+		//assert.Equal(t, "/ping/xiaoming", lowercase(ctx.Request().GetHttpRequest().URL.Path))
 	})
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/Ping/xiaoming", nil)
+	req, _ := http.NewRequest("GET", "/test/Ping/xiaoming/boy", nil)
+	engine.ServeHTTP(w, req)
+	req, _ = http.NewRequest("GET", "/test/ping/xiaoming/girl", nil)
 	engine.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
@@ -99,6 +103,16 @@ func TestRouter404(t *testing.T) {
 
 	// because ResponseWriter was overide by Context.Response.
 	// assert.Equal(t, 404, w.Code)
+
+	// test not found static file
+	engine.router.ServerFile("/st/", http.Dir("."), true)
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", "/st/m", nil)
+	engine.ServeHTTP(w, req)
+
+	req, _ = http.NewRequest("GET", "/", nil)
+	engine.ServeHTTP(w, req)
+
 }
 
 func TestRouterHandle(t *testing.T) {

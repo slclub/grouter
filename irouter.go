@@ -44,7 +44,7 @@ type Router interface {
 	CodeHandle(int) gnet.HandleFunc
 	BindCodeHandle(int, gnet.HandleFunc)
 	// static file server.
-	ServerFile(string, http.FileSystem)
+	ServerFile(string, http.FileSystem, ...bool)
 }
 
 // --------------------------------------------------------------------------------------

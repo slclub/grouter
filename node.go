@@ -284,8 +284,11 @@ func (nd *node) ParseParams(pa gnet.Contexter, path_type int, param_str string) 
 	//}
 
 	// url: /xxx/xxx/:param1/:param2
-	if path_type == PATH_T_COMMON {
+	if path_type == PATH_T_COMMON && len(param_str) > 0 {
 		begin, record := 0, 0
+		if param_str[0] == '/' {
+			param_str = param_str[1:]
+		}
 		var key, value = "", ""
 		for i, v := range param_str {
 			if v != '/' {
@@ -295,6 +298,7 @@ func (nd *node) ParseParams(pa gnet.Contexter, path_type int, param_str string) 
 			begin = i + 1
 			key, _ = nd.getKey(record)
 			record++
+			//fmt.Println("TEST.node.ParseParam", key, value, len(nd.GetKeys()))
 			// key could not be empty.
 			if key == "" {
 				continue
@@ -310,7 +314,7 @@ func (nd *node) ParseParams(pa gnet.Contexter, path_type int, param_str string) 
 
 func (nd *node) getKey(key interface{}) (string, int) {
 	if k, ok := key.(int); ok {
-		if k >= len(nd.keys)-1 {
+		if k >= len(nd.keys) {
 			return "", -1
 		}
 		return nd.keys[k], k
@@ -349,7 +353,7 @@ func (nd *node) AddRoute(path string, handle gnet.HandleFunc, param_keys []strin
 		return
 	}
 
-	// fmt.Println("--------AddRoute", path, "left path:", path_l)
+	// fmt.Println("--------AddRoute", path, "left path:", param_keys)
 	// Second condition was supported for "/" .
 	if path_l == "" || (path_l == "/" && path != path_l) {
 		panic("[ERROR][GROUTER][ADD_ROUTE]PATH_EXIST[" + path + "]LEFT_PATH[" + path_l + "]")

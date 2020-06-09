@@ -60,6 +60,9 @@ func (u *urldecoder) Parse(path string) (string, []string) {
 		path_left = path_left[:len(path_left)-2]
 	}
 	param_keys := strings.Split(path_left, "/:")
+	if len(param_keys) > 0 {
+		param_keys = param_keys[1:]
+	}
 	return path_rtn, param_keys
 }
 
