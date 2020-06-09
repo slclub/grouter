@@ -35,6 +35,7 @@ type Router interface {
 	PATCH(string, gnet.HandleFunc)
 	PUT(string, gnet.HandleFunc)
 	DELETE(string, gnet.HandleFunc)
+	ANY(string, gnet.HandleFunc)
 	//just for test. can directly bind with http lisen
 	//ServeHTTP(res http.ResponseWriter, req *http.Request)
 

@@ -126,6 +126,10 @@ func (r *router) DELETE(path string, handle gnet.HandleFunc) {
 	r.Handle(http.MethodDelete, path, handle)
 }
 
+func (r *router) ANY(path string, handle gnet.HandleFunc) {
+	r.Handle("ANY", path, handle)
+}
+
 // ------------------------------------------shortcut-end--------------------------------------------------
 
 // implement Router.Handle
@@ -160,7 +164,7 @@ func (r *router) Handle(method, path string, handle gnet.HandleFunc) {
 
 // static serve file system.
 func (r *router) ServerFile(path string, root_fs http.FileSystem) {
-	file_server := http.FileServer(root_fs)
+	file_server := http.StripPrefix(path, http.FileServer(root_fs))
 	r.GET(path, func(ctx gnet.Contexter) {
 		file_server.ServeHTTP(ctx.Response(), ctx.Request().GetHttpRequest())
 	})
@@ -221,10 +225,16 @@ WALK_AGAIN:
 				http_method = "ANY"
 				goto WALK_AGAIN
 			}
+
 			goto WALK_404
 		}
 		handle := node.GetHandleFunc()
 		if handle == nil {
+			// here support ANY method.
+			if http_method != "ANY" && http_method != http.MethodConnect && http_method != http.MethodOptions {
+				http_method = "ANY"
+				goto WALK_AGAIN
+			}
 			goto WALK_404
 		}
 		param_str, err := url.QueryUnescape(left_path)
@@ -244,12 +254,20 @@ WALK_AGAIN:
 	return
 WALK_404:
 	not_handle := r.CodeHandle(http.StatusNotFound)
-	if not_handle == nil {
-		return
-	}
+	//if not_handle == nil {
+	//	return
+	//}
 	//not_handle(ctx)
 	ctx.SetHandler(not_handle)
 }
+
+//func (r router) againAny(ctx gnet.Contexter) {
+//	var req *http.Request
+//	req = ctx.Request().GetHttpRequest()
+//
+//	req.Method = "ANY"
+//	r.Execute(ctx)
+//}
 
 // for test. cover test.
 // can bind with Http.ListenAndServe
@@ -264,7 +282,7 @@ func http_404_handle(ctx gnet.Contexter) {
 	//ctx.Response().Flush()
 	//ctx.Response().InitSelf(nil)
 
-	fmt.Println("---------------handle-not found--------------------")
+	// fmt.Println("---------------handle-not found--------------------")
 }
 
 func http_405_handle(ctx gnet.Contexter) {

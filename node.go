@@ -150,7 +150,7 @@ func (nd *node) GetIndices() string {
 }
 
 func (nd *node) SetIndices(indices string) {
-	nd.indices = indices
+	nd.indices = (indices)
 }
 
 func (nd *node) GetNodeAuto(key interface{}) Node {
@@ -239,45 +239,49 @@ func (nd *node) Lookup(path string) (Node, string) {
 	}
 
 	// perfect match.
-	if head != nil {
-		return head, ""
-	}
+	//if head != nil {
+	//	return head, ""
+	//}
 
-	return nd, path[begin:]
+	// begin ==0 not match any node
+	// begin >0 perfect match.
+	return head, path[begin:]
 }
 
 // url param pase to ParamterArray.
 func (nd *node) ParseParams(pa gnet.Contexter, path_type int, param_str string) {
 	// url: /xxx?param1=v  url question mark request
 	// it is not necessary to sort  by  keys of node.
-	if path_type == PATH_T_QUESTION {
-		begin := 0
-		var key, value = "", ""
-		// DEAL_ADD_MARK as symbol. use this sign explain the code using.
-		// To deal mark of + in here can have much better performance.
-		// deal_add_mark := false
-		for i, v := range param_str {
+	// net/url had also parse this situation.
+	// when the code reachs here, the path had no ? and its parameters.
+	//if path_type == PATH_T_QUESTION {
+	//	begin := 0
+	//	var key, value = "", ""
+	//	// DEAL_ADD_MARK as symbol. use this sign explain the code using.
+	//	// To deal mark of + in here can have much better performance.
+	//	// deal_add_mark := false
+	//	for i, v := range param_str {
 
-			if v == '=' {
-				key = param_str[begin:i]
-				begin = i + 1
-				continue
-			}
+	//		if v == '=' {
+	//			key = param_str[begin:i]
+	//			begin = i + 1
+	//			continue
+	//		}
 
-			if v == '&' {
-				value = param_str[begin:i]
-				begin = i + 1
-				pa.SetParam(key, value)
-				key, value = "", ""
-				continue
-			}
-		}
-		// add last param
-		if key != "" {
-			pa.SetParam(key, value)
-		}
-		return
-	}
+	//		if v == '&' {
+	//			value = param_str[begin:i]
+	//			begin = i + 1
+	//			pa.SetParam(key, value)
+	//			key, value = "", ""
+	//			continue
+	//		}
+	//	}
+	//	// add last param
+	//	if key != "" {
+	//		pa.SetParam(key, value)
+	//	}
+	//	return
+	//}
 
 	// url: /xxx/xxx/:param1/:param2
 	if path_type == PATH_T_COMMON {
@@ -294,9 +298,9 @@ func (nd *node) ParseParams(pa gnet.Contexter, path_type int, param_str string) 
 			pa.SetParam(key, value)
 			key, value = "", ""
 		}
-		if key != "" {
-			pa.SetParam(key, value)
-		}
+		//if key != "" {
+		//	pa.SetParam(key, value)
+		//}
 	}
 }
 
@@ -308,6 +312,7 @@ func (nd *node) getKey(key interface{}) (string, int) {
 		return nd.keys[k], k
 	}
 
+	// here not was invoked.
 	if k, ok := key.(string); ok {
 		for i, v := range nd.keys {
 			if v == k {
@@ -366,7 +371,7 @@ func (nd *node) AddRoute(path string, handle gnet.HandleFunc, param_keys []strin
 		}
 		if i == 0 {
 			head.SetType(NODE_T_WILD)
-			head.SetIndices("/" + indices)
+			head.SetIndices("/" + lowercase(indices))
 			continue
 		}
 
@@ -379,7 +384,7 @@ func (nd *node) AddRoute(path string, handle gnet.HandleFunc, param_keys []strin
 			children: make(map[string]Node),
 		}
 		next_tmp.SetType(NODE_T_WILD)
-		next_tmp.SetIndices("/" + indices)
+		next_tmp.SetIndices("/" + lowercase(indices))
 
 		// link with before.
 		next.AddNode(next_tmp)
