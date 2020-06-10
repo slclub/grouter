@@ -115,9 +115,12 @@ func TestRouter404(t *testing.T) {
 	// assert.Equal(t, 404, w.Code)
 
 	// test not found static file
-	engine.router.ServerFile("/st/", ".", true)
+	engine.router.ServerFile("/st/", "/tmp/", true)
 	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("GET", "/st/m", nil)
+	req, _ = http.NewRequest("GET", "/st/glog", nil)
+	engine.ServeHTTP(w, req)
+
+	req, _ = http.NewRequest("GET", "/st/glog/", nil)
 	engine.ServeHTTP(w, req)
 
 	req, _ = http.NewRequest("GET", "/", nil)

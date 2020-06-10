@@ -186,73 +186,69 @@ func (r *router) Handle(method, path string, handle gnet.HandleFunc) {
 //
 // 	return http.ServeFile(w, r, name)
 // }
-func (r *router) ServerFile(path string, root_path string, args ...bool) {
+func (r *router) ServerFile(rpath string, root_path string, args ...bool) {
 	root_fs := http.Dir(root_path)
 	file_server := http.FileServer(root_fs)
-	if i := strings.IndexByte(path, ':'); i >= 1 {
-		file_server = http.StripPrefix(path[:i], file_server)
+	if i := strings.IndexByte(rpath, ':'); i >= 1 {
+		file_server = http.StripPrefix(rpath[:i], file_server)
 	} else {
-		file_server = http.StripPrefix(path, file_server)
+		file_server = http.StripPrefix(rpath, file_server)
 	}
 	tail := false
 	if len(args) >= 1 {
 		tail = args[0]
 	}
 
-	r.GET(path, func(ctx gnet.Contexter) {
-		//if _, noListing := root_fs.(http.FileSystem); noListing {
-		//	r.CodeHandle(404)(ctx)
-		//	fmt.Println("GROUTER. static file 404", noListing)
-		//	return
-		//}
-
+	r.GET(rpath, func(ctx gnet.Contexter) {
 		// Use or deny floder list. decide by tail of request.URL.Path is '/'
 		// 禁用或启用 静态目录浏览仅仅需要处理 请求的末尾时候有 '/'
-
-		file := ctx.Request().GetHttpRequest().URL.Path
+		req := ctx.Request().GetHttpRequest()
+		upath := req.URL.Path
 		file_new, _ := ctx.Request().GetString("filepath")
-		// fmt.Println("REQUEST_PATH STEP1", file, "param", file_new, "http.FileSystem:", root_fs)
-		lf := len(file)
+		//fmt.Println("REQUEST_PATH STEP1", req.URL.String(), "param", file_new, "http.FileSystem:", root_fs)
+		lf := len(upath)
 
+		// support defined no param
 		if file_new == "" {
-			if lf > len(path) {
-				file_new = file[len(path):]
+			if lf > len(rpath) {
+				file_new = upath[len(rpath):]
 			} else {
 				file_new = ""
 			}
 		}
-
-		// Request floder
+		// Request static folder.
 		if gnet.IsDir(root_path + file_new) {
 			if tail {
-				if file[lf-1] != '/' {
-					ctx.Request().GetHttpRequest().URL.Path += "/"
+				if upath[lf-1] != '/' {
+					req.URL.Path += "/"
+					http.Redirect(ctx.Response(), req, req.URL.Path, http.StatusMovedPermanently)
+					return
 				}
+				// list files of the current dir
+				file_server.ServeHTTP(ctx.Response(), req)
+				return
 			} else {
-				//if !tail && file[lf-1] == '/' {
-				//	ctx.Request().GetHttpRequest().URL.Path += file[:lf-1]
-				//}
-				r.CodeHandle(404)(ctx)
+				// deny redirect 405
+				r.CodeHandle(405)(ctx)
 				return
 			}
 		} else {
-			// request file
+			// Request static file.
+			// remove slash auto.
 			if file_new[len(file_new)-1] == '/' {
 				file_new = file_new[:len(file_new)-1]
-				ctx.Request().GetHttpRequest().URL.Path = file[:lf-1]
+				req.URL.Path = upath[:lf-1]
 			}
 		}
-		// Deny access floder. by your setting.
-
-		// Can not found source file. use an public 404 handle.
+		// check file exist. if not invoke 404 handle.
 		f, err := root_fs.Open(file_new)
-		// fmt.Println("REQUEST_PATH STEP2", file, "param", file_new, "err:", err)
 		if err != nil {
 			r.CodeHandle(404)(ctx)
 			return
 		}
 		f.Close()
-		file_server.ServeHTTP(ctx.Response(), ctx.Request().GetHttpRequest())
+		//fmt.Println("REQUEST_PATH STEP3", upath, "file_new", file_new, "URL:", req.URL.String())
+		file_server.ServeHTTP(ctx.Response(), req)
 	})
 }
 
