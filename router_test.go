@@ -48,6 +48,16 @@ func TestHttpRouterListen(t *testing.T) {
 	engine.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
+
+	engine.router.GET("/test/oneparam/:uid", func(ctx gnet.Contexter) {
+		// dont implement to here so
+		uid, _ := ctx.Request().GetString("uid")
+		assert.Equal(t, "xiaoming/girl", uid)
+	})
+
+	req, _ = http.NewRequest("GET", "/test/oneparam/xiaoming/girl", nil)
+	engine.ServeHTTP(w, req)
+
 }
 
 func TestRouterHandleQuestion(t *testing.T) {
@@ -105,7 +115,7 @@ func TestRouter404(t *testing.T) {
 	// assert.Equal(t, 404, w.Code)
 
 	// test not found static file
-	engine.router.ServerFile("/st/", http.Dir("."), true)
+	engine.router.ServerFile("/st/", ".", true)
 	w = httptest.NewRecorder()
 	req, _ = http.NewRequest("GET", "/st/m", nil)
 	engine.ServeHTTP(w, req)
@@ -126,7 +136,7 @@ func TestRouterHandle(t *testing.T) {
 	r.GET("/robot/get/:uid", handle_index)
 	r.GET("/robot/update/:uid", handle_index)
 	r.GET("/robot/not/:uid", handle_index)
-	r.ServerFile("/st/", http.Dir("."))
+	r.ServerFile("/st/", ("."))
 
 	r.POST("/post", handle_index)
 	r.POST("/robot/list", handle_index)

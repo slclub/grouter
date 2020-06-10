@@ -285,11 +285,24 @@ func (nd *node) ParseParams(pa gnet.Contexter, path_type int, param_str string) 
 
 	// url: /xxx/xxx/:param1/:param2
 	if path_type == PATH_T_COMMON && len(param_str) > 0 {
+		lenk := len(nd.GetKeys())
+		if lenk == 0 {
+			return
+		}
 		begin, record := 0, 0
 		if param_str[0] == '/' {
 			param_str = param_str[1:]
 		}
 		var key, value = "", ""
+		if len(nd.GetKeys()) == 1 {
+			key, _ = nd.getKey(0)
+			if param_str[len(param_str)-1] == '/' {
+				param_str = param_str[:len(param_str)-1]
+			}
+			pa.SetParam(key, param_str)
+			return
+		}
+
 		for i, v := range param_str {
 			if v != '/' {
 				continue
@@ -306,9 +319,9 @@ func (nd *node) ParseParams(pa gnet.Contexter, path_type int, param_str string) 
 			pa.SetParam(key, value)
 			key, value = "", ""
 		}
-		//if key != "" {
-		//	pa.SetParam(key, value)
-		//}
+		if key != "" {
+			pa.SetParam(key, value)
+		}
 	}
 }
 

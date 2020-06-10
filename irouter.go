@@ -4,7 +4,7 @@ import (
 	//"io"
 	"github.com/slclub/gcore/flow"
 	"github.com/slclub/gnet"
-	"net/http"
+	//"net/http"
 )
 
 //====================================================================================
@@ -44,7 +44,7 @@ type Router interface {
 	CodeHandle(int) gnet.HandleFunc
 	BindCodeHandle(int, gnet.HandleFunc)
 	// static file server.
-	ServerFile(string, http.FileSystem, ...bool)
+	ServerFile(string, string, ...bool)
 }
 
 // --------------------------------------------------------------------------------------

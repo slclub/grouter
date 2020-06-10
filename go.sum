@@ -153,6 +153,8 @@ github.com/slclub/gnet v0.0.0-20200608071957-121bcf6989e5/go.mod h1:Rq2Nutl5pLxK
 github.com/slclub/gnet v0.0.0-20200608151655-c61c371a6ee5/go.mod h1:Rq2Nutl5pLxK/AkwGIWsVKurz8FcNbbC15ITH+oHiSA=
 github.com/slclub/gnet v0.0.0-20200609121958-da0a67fe8fe3 h1:9f+5uJEzXASMmtZxAzLC1mMINsTumFdGXThoj1tIrMQ=
 github.com/slclub/gnet v0.0.0-20200609121958-da0a67fe8fe3/go.mod h1:Rq2Nutl5pLxK/AkwGIWsVKurz8FcNbbC15ITH+oHiSA=
+github.com/slclub/gnet v0.0.0-20200610034653-44e24fe915e4 h1:nurextb5LnfoxsnnqBZP2GdT8B+uQOozesx6pJ+PtdA=
+github.com/slclub/gnet v0.0.0-20200610034653-44e24fe915e4/go.mod h1:Rq2Nutl5pLxK/AkwGIWsVKurz8FcNbbC15ITH+oHiSA=
 github.com/slclub/goqueue v0.0.4 h1:2lyYr243RLUYdrcv7KCHmRwfQVjXHt86O61hav/co7A=
 github.com/slclub/goqueue v0.0.4/go.mod h1:5Pm6g6fWEMUZTQvZqUHyKygdV4VEqHO3joxCoDYFj5Q=
 github.com/slclub/grouter v0.0.0-20200608154541-6a3fcf1718e0/go.mod h1:biIOH/sx78aJxd6Oc9Ho/svruy2IW/GBFR7FugHvLIA=
