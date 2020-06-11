@@ -4,6 +4,7 @@ import (
 	//"io"
 	"github.com/slclub/gcore/flow"
 	"github.com/slclub/gnet"
+	"github.com/slclub/gnet/permission"
 	//"net/http"
 )
 
@@ -66,6 +67,8 @@ type RouterWriter interface {
 type Node interface {
 	Lookuper
 	RouterWriter
+	permission.IAccess
+
 	GetPath() string
 	SetPath(string)
 

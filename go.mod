@@ -4,9 +4,9 @@ go 1.14
 
 require (
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
-	github.com/slclub/gcore v0.0.0-20200608164630-663e3c6d49cf
-	github.com/slclub/gnet v0.0.0-20200610034653-44e24fe915e4
-	github.com/slclub/link v0.0.0-20200605085902-9e7733b41a86
+	github.com/slclub/gcore v0.0.0-20200611173513-b84d6470ad59
+	github.com/slclub/gnet v0.0.0-20200611112313-9d4673ce2c97
+	github.com/slclub/link v0.0.0-20200611133650-539b373ec165
 	github.com/spf13/viper v1.7.0 // indirect
 	github.com/stretchr/testify v1.6.1
 )

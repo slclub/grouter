@@ -4,6 +4,7 @@ import (
 	"bytes"
 	//"fmt"
 	"github.com/slclub/gnet"
+	"github.com/slclub/gnet/permission"
 	"net/http"
 	"strings"
 )
@@ -57,6 +58,7 @@ type node struct {
 	indices  string
 	children map[string]Node
 	keys     []string
+	access   permission.Accesser
 }
 
 // ============================store router node function =====================
@@ -363,6 +365,9 @@ func (nd *node) AddRoute(path string, handle gnet.HandleFunc, param_keys []strin
 		f_node.SetType(NODE_T_PATH)
 		f_node.SetHandleFunc(handle)
 		f_node.AddKey(param_keys)
+		access, _ := permission.NewAccess(path)
+		f_node.SetAccess(access)
+		Group.Execute(access)
 		return
 	}
 
@@ -423,11 +428,20 @@ func (nd *node) AddRoute(path string, handle gnet.HandleFunc, param_keys []strin
 	next.SetPath(path)
 	next.SetType(NODE_T_PATH)
 	next.SetHandleFunc(handle)
-
+	access, _ := permission.NewAccess(path)
+	next.SetAccess(access)
+	Group.Execute(access)
 }
 
 func (nd *node) GetChildren() map[string]Node {
 	return nd.children
+}
+
+func (nd *node) GetAccess() permission.Accesser {
+	return nd.access
+}
+func (nd *node) SetAccess(access permission.Accesser) {
+	nd.access = access
 }
 
 // =======================================================================

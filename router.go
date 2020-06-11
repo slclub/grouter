@@ -330,6 +330,9 @@ WALK_AGAIN:
 		//handle(ctx)
 
 		ctx.SetHandler(handle)
+		// permission deal logic.
+		ctx.SetExecute(Group.GetMiddle(node.GetAccess()))
+		ctx.SetAccess(node.GetAccess())
 	}
 	// TODO: get param from net/url.URL.Query()
 	// TODO: get param from req.ParseForm.
