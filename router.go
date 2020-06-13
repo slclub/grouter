@@ -22,6 +22,8 @@ type router struct {
 	code_handles map[int]gnet.HandleFunc
 }
 
+var _ Router = &router{}
+
 //type param struct {
 //	key   string
 //	value string
