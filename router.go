@@ -2,6 +2,7 @@ package grouter
 
 import (
 	//"errors"
+	"bytes"
 	"fmt"
 	"github.com/slclub/gcore/flow"
 	"github.com/slclub/gnet"
@@ -386,4 +387,36 @@ func http_500_handle(ctx gnet.Contexter) {
 
 	//ctx.Response().Flush()
 	link.ERROR("[500] server internal error!")
+}
+
+func PrintTree(r Router, method string) {
+
+	var store Store = r.GetStore()
+	fmt.Println("---", method, "---------------------------------------------------------")
+	var node Node
+	node, _ = store.Lookup(method)
+	print_store_tree_node(node, 1)
+}
+
+func print_store_tree_node(node Node, depth int) {
+	if node == nil {
+		return
+	}
+	fmt.Println(get_copy_tree_depth([]byte(" "), depth*2), "|__", node.GetIndices(), "param:", node.GetKeys(), "nodeType:", node.GetType(), "path", node.GetPath())
+	children := node.GetChildren()
+	if len(children) == 0 {
+		return
+	}
+	for _, v := range children {
+		//fmt.Println("children key -----", key)
+		print_store_tree_node(v, depth+1)
+	}
+}
+
+func get_copy_tree_depth(s []byte, depth int) string {
+	var buf bytes.Buffer
+	for i := 0; i < depth; i++ {
+		buf.Write(s)
+	}
+	return string(buf.Bytes())
 }

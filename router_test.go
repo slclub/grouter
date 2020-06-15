@@ -1,7 +1,6 @@
 package grouter
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/slclub/gnet"
 	"github.com/stretchr/testify/assert"
@@ -82,7 +81,7 @@ func TestRouterQuestionHttp(t *testing.T) {
 	///news/analysis?name=%E6%B5%8B%E8%AF%95%E6%95%B0%E6%8D%AE
 	engine.ServeHTTP(w, req)
 
-	print_store_tree_root(t, engine.router, http.MethodGet)
+	PrintTree(engine.router, http.MethodGet)
 	assert.Equal(t, http.StatusOK, w.Code)
 }
 func TestRouterQuestionEncodeUrl(t *testing.T) {
@@ -96,7 +95,7 @@ func TestRouterQuestionEncodeUrl(t *testing.T) {
 	///news/analysis?name=%E6%B5%8B%E8%AF%95%E6%95%B0%E6%8D%AE
 	engine.ServeHTTP(w, req)
 
-	print_store_tree_root(t, engine.router, http.MethodGet)
+	PrintTree(engine.router, http.MethodGet)
 	assert.Equal(t, http.StatusOK, w.Code)
 }
 
@@ -158,8 +157,8 @@ func TestRouterHandle(t *testing.T) {
 	r.OPTIONS("/robot/not/:uid", handle_index)
 	r.ANY("/robot/not/:uid", handle_index)
 
-	print_store_tree_root(t, r, http.MethodGet)
-	print_store_tree_root(t, r, "ANY")
+	PrintTree(r, http.MethodGet)
+	PrintTree(r, "ANY")
 	//print_store_tree_root(t, r, http.MethodHead)
 	//print_store_tree_root(t, r, http.MethodOptions)
 	//print_store_tree_root(t, r, http.MethodPut)
@@ -178,36 +177,4 @@ func TestRouterErrorANDPanic(t *testing.T) {
 		r.Handle("FK", "/ok", handle_index)
 	})
 	r.BindCodeHandle(400, nil)
-}
-
-func print_store_tree_root(t *testing.T, r Router, method string) {
-
-	var store Store = r.GetStore()
-	fmt.Println("---", method, "---------------------------------------------------------")
-	var node Node
-	node, _ = store.Lookup(method)
-	print_store_tree_node(t, node, 1)
-}
-
-func print_store_tree_node(t *testing.T, node Node, depth int) {
-	if node == nil {
-		return
-	}
-	fmt.Println(get_copy_tree_depth([]byte(" "), depth*2), "|__", node.GetIndices(), "param:", node.GetKeys(), "nodeType:", node.GetType(), "path", node.GetPath())
-	children := node.GetChildren()
-	if len(children) == 0 {
-		return
-	}
-	for _, v := range children {
-		//fmt.Println("children key -----", key)
-		print_store_tree_node(t, v, depth+1)
-	}
-}
-
-func get_copy_tree_depth(s []byte, depth int) string {
-	var buf bytes.Buffer
-	for i := 0; i < depth; i++ {
-		buf.Write(s)
-	}
-	return string(buf.Bytes())
 }
