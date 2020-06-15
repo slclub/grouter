@@ -5,6 +5,7 @@ import (
 	"github.com/slclub/gnet"
 	"github.com/slclub/gnet/permission"
 	"github.com/slclub/link"
+	"github.com/slclub/utils"
 )
 
 type IGroup interface {
@@ -44,7 +45,7 @@ func (gr *groupObject) Group(f func(IGroup)) {
 }
 
 func (gr *groupObject) Use(f gnet.HandleFunc) IGroup {
-	link.DEBUG_PRINT("[GROUTE][GROUP][USE][STEP1]", "\n")
+	link.DEBUG_PRINT("[GROUTE][GROUP][USE][STEP1]", utils.EOL)
 	if gr.group_state {
 		gr.middle_group.Use(f)
 	} else {
@@ -83,12 +84,12 @@ func (gr *groupObject) Execute(access permission.Accesser) {
 		gr.Reset()
 		return
 	}
-	link.DEBUG_PRINT("[GROUTE][GROUP][Execute][STEP1]", gr.middle_group, "\n")
+	link.DEBUG_PRINT("[GROUTE][GROUP][Execute][STEP1]", gr.middle_group, utils.EOL)
 	if gr.middle_node == nil && gr.middle_group == nil {
 		gr.Reset()
 		return
 	}
-	link.DEBUG_PRINT("[GROUTE][GROUP][Execute][STEP2]", "\n")
+	link.DEBUG_PRINT("[GROUTE][GROUP][Execute][STEP2]", utils.EOL)
 	// get mid
 	mid := gr.stack_middle.Get(access.GetAID())
 	if mid == nil {

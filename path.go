@@ -1,6 +1,7 @@
 package grouter
 
 import (
+	"github.com/slclub/utils/bytesconv"
 	"strings"
 )
 
@@ -104,7 +105,7 @@ func (u *urldecoder) Decode(path string) (int, string, interface{}) {
 	// deal split path.
 	// first section is url path. second section is params.
 	path_buf, param_str, path_type := u.convPath(path)
-	return path_type, string(path_buf), param_str
+	return path_type, bytesconv.BytesToString(path_buf), param_str
 }
 
 // benchmark testing

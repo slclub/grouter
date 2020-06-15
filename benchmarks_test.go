@@ -25,7 +25,7 @@ func BenchmarkFirst(B *testing.B) {
 
 	//run_request(B, app, "GET", url1)
 	run_request(B, app, "GET", url2)
-	run_request(B, app, "GET", url3)
+	//run_request(B, app, "GET", url3)
 }
 
 type header_writer struct {
