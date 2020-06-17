@@ -48,3 +48,7 @@ func (eg *Engine) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	ctx.Reset()
 	eg.pool.Put(ctx)
 }
+
+func (en *Engine) GetRouter() Router {
+	return en.router
+}

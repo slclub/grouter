@@ -31,7 +31,8 @@ func TestCodeFunctions(t *testing.T) {
 func TestHttpRouterListen(t *testing.T) {
 	engine := NewEngine()
 	// and support URL path captial leter.
-	engine.router.GET("/test/ping/:uid/:sex", func(ctx gnet.Contexter) {
+	router := engine.GetRouter()
+	router.GET("/test/ping/:uid/:sex", func(ctx gnet.Contexter) {
 		ctx.Get("wo")
 		// dont implement to here so
 		uid, _ := ctx.Request().GetString("uid")
