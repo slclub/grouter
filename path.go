@@ -101,22 +101,28 @@ func (u *urldecoder) Decode(path string) (int, string, interface{}) {
 	//
 	// 加号处理可以提供方法尽量不在这里处理，会影响性能
 	// Processing plus signs in other places can improve some performance
+	lenp := len(path)
+	buf := make([]byte, 0, lenp+2)
+	//if lenp > 126 {
+	//	buf = make([]byte, 0, lenp+2)
+	//}
+	buf = buf[:lenp+2]
 
-	// deal split path.
-	// first section is url path. second section is params.
-	path_buf, param_str, path_type := u.convPath(path)
-	return path_type, bytesconv.BytesToString(path_buf), param_str
+	path_buf, params, path_type := u.convPath(path, &buf)
+	return path_type, bytesconv.BytesToString(path_buf), params
+	//return path_type, string(path_buf), param_str
 }
 
 // benchmark testing
 // take 2 alloc/op
-func (u *urldecoder) convPath(path string) ([]byte, string, int) {
+func (u *urldecoder) convPath(path string, buffer *[]byte) ([]byte, string, int) {
 	lenp := len(path)
 	if lenp > 0 && path[0] == '*' {
 		return nil, "", 0
 	}
+	//u.alloc(&buf, lenp+2)
 
-	buf := make([]byte, lenp+1)
+	buf := *buffer
 	// write buf size.
 	w := 0
 	if path[0] != '/' {
@@ -144,10 +150,10 @@ func (u *urldecoder) convPath(path string) ([]byte, string, int) {
 		}
 		buf[w] = path[i]
 		w++
-		if i == (lenp-1) && path[i] != '/' {
-			buf[w] = '/'
-			w++
-		}
+	}
+	if path[lenp-1] != '/' {
+		buf[w] = '/'
+		w++
 	}
 	return buf[:w], "", PATH_T_COMMON
 }

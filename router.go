@@ -266,6 +266,8 @@ func (r *router) Execute(ctx gnet.Contexter) {
 	//path_type, path, params_str := r.GetDecoder().Decode(req.URL.String())
 	//path_type, path, params_str := r.GetDecoder().Decode(req.URL.Path)
 	path_type, path, _ := r.GetDecoder().Decode(req.URL.Path)
+	// BenchmarkFirst-4		 3687277	       326 ns/op	     192 B/op	       4 allocs/op
+	//return
 
 	var root Node
 	var nothing string
@@ -274,8 +276,13 @@ WALK_AGAIN:
 	if path_type > 0 {
 		root, nothing = r.GetStore().Lookup(http_method)
 	}
+
 	// method not allowed. handle 405
 	if root == nil {
+		if http_method != "ANY" && http_method != http.MethodConnect && http_method != http.MethodOptions {
+			http_method = "ANY"
+			goto WALK_AGAIN
+		}
 		handle := r.CodeHandle(http.StatusMethodNotAllowed)
 		if handle != nil {
 			//handle()
@@ -313,6 +320,7 @@ WALK_AGAIN:
 
 			goto WALK_404
 		}
+
 		handle := node.GetHandleFunc()
 		if handle == nil {
 			// here support ANY method.

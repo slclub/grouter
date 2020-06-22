@@ -44,9 +44,14 @@ func (eg *Engine) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	ctx.Response().InitSelf(res)
 
 	eg.router.Execute(ctx)
-	ctx.GetHandler()(ctx)
-	ctx.Reset()
-	eg.pool.Put(ctx)
+
+	handle := ctx.GetHandler()
+	if handle != nil {
+		handle(ctx)
+	}
+
+	defer eg.pool.Put(ctx)
+	defer ctx.Reset()
 }
 
 func (en *Engine) GetRouter() Router {

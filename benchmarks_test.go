@@ -3,11 +3,30 @@ package grouter
 import (
 	//"fmt"
 	"github.com/slclub/gnet"
+	"github.com/slclub/link"
+	"github.com/slclub/utils"
 	"net/http"
 	"testing"
 )
 
 // go test -v -run="none" -bench=.
+
+func BenchmarkPath(B *testing.B) {
+	url := "/amine/now"
+
+	path_decoder := NewPath()
+
+	B.ReportAllocs()
+	B.ResetTimer()
+
+	path := ""
+	for i := 0; i < B.N; i++ {
+		_, path, _ = path_decoder.Decode(url)
+	}
+
+	link.DEBUG_PRINT("path_decoder:", path, utils.EOL)
+}
+
 //
 func BenchmarkFirst(B *testing.B) {
 	app := NewEngine()
