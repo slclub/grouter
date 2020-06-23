@@ -27,6 +27,21 @@ func BenchmarkPath(B *testing.B) {
 	link.DEBUG_PRINT("path_decoder:", path, utils.EOL)
 }
 
+func BenchmarkMap(B *testing.B) {
+	store := NewStore()
+	store.Lookup("GET")
+	store.Lookup("POST")
+	store.Lookup("HEAD")
+	store.Lookup("ANY")
+
+	B.ReportAllocs()
+	B.ResetTimer()
+
+	for i := 0; i < B.N; i++ {
+		store.Lookup("POST")
+	}
+}
+
 //
 func BenchmarkFirst(B *testing.B) {
 	app := NewEngine()

@@ -1,12 +1,14 @@
 package grouter
 
 import (
-	"bytes"
-	//"fmt"
+	//"bytes"
 	"github.com/slclub/gnet"
 	"github.com/slclub/gnet/permission"
+	"github.com/slclub/link"
+	"github.com/slclub/utils/bytesconv"
 	"net/http"
 	"strings"
+	"sync"
 )
 
 const (
@@ -22,7 +24,8 @@ const (
 // the place of store the nodes.
 // TODO: auto node merge and split.for good performence.
 type nodeStore struct {
-	nodes        map[string]Node
+	nodes map[string]Node
+	//http_methods []string
 	http_methods map[string]bool
 }
 
@@ -61,20 +64,29 @@ type node struct {
 	access   permission.Accesser
 }
 
+var indices_pool sync.Pool
+
+func init() {
+	indices_pool.New = func() interface{} {
+		c := make([]byte, 128)
+		return &c
+	}
+}
+
 // ============================store router node function =====================
 func NewStore() Store {
 	st := &nodeStore{
-		http_methods: map[string]bool{},
+		//http_methods: map[string]bool{},
 	}
 
-	st.http_methods[http.MethodGet] = true
-	st.http_methods[http.MethodHead] = true
-	st.http_methods[http.MethodOptions] = true
-	st.http_methods[http.MethodPost] = true
-	st.http_methods[http.MethodPut] = true
-	st.http_methods[http.MethodPatch] = true
-	st.http_methods[http.MethodDelete] = true
-	st.http_methods["ANY"] = true
+	//st.http_methods[http.MethodGet] = true
+	//st.http_methods[http.MethodHead] = true
+	//st.http_methods[http.MethodOptions] = true
+	//st.http_methods[http.MethodPost] = true
+	//st.http_methods[http.MethodPut] = true
+	//st.http_methods[http.MethodPatch] = true
+	//st.http_methods[http.MethodDelete] = true
+	//st.http_methods["ANY"] = true
 
 	return st
 }
@@ -92,7 +104,7 @@ func (st *nodeStore) Create() Store {
 func (st *nodeStore) Lookup(method string) (n Node, nothing string) {
 	n = st.nodes[method]
 	// TODO:need to support more schema. not only http
-	if !st.checkHttpMethod(method) {
+	if false == st.checkHttpMethod(method) {
 		nothing = "NOT ALLOWED METHOD"
 		return
 	}
@@ -101,6 +113,7 @@ func (st *nodeStore) Lookup(method string) (n Node, nothing string) {
 		n.SetIndices(method)
 		n.SetType(NODE_T_ROOT)
 		st.Save(n)
+		//fmt.Println("look up store", method)
 	}
 	return
 }
@@ -115,7 +128,23 @@ func (st *nodeStore) CreateNode(param_num int) Node {
 
 // http allowd methods check
 func (st *nodeStore) checkHttpMethod(method string) bool {
-	if st.http_methods[method] {
+
+	switch method {
+	case http.MethodGet:
+		return true
+	case http.MethodPost:
+		return true
+	case "ANY":
+		return true
+	case http.MethodHead:
+		return true
+	case http.MethodOptions:
+		return true
+	case http.MethodPatch:
+		return true
+	case http.MethodPut:
+		return true
+	case http.MethodDelete:
 		return true
 	}
 	return false
@@ -156,12 +185,11 @@ func (nd *node) SetIndices(indices string) {
 }
 
 func (nd *node) GetNodeAuto(key interface{}) Node {
-	if rel, ok := key.(int); ok {
-		return nd.GetNodeInt(rel)
-	}
-
 	if rel, ok := key.(string); ok {
 		return nd.GetNodeStr(rel)
+	}
+	if rel, ok := key.(int); ok {
+		return nd.GetNodeInt(rel)
 	}
 	return nil
 }
@@ -215,6 +243,7 @@ func (nd *node) Lookup(path string) (Node, string) {
 		if next == nil {
 			return nd, path
 		}
+		//bytesconv.BytesToString([]byte{'a'})
 		return next, ""
 	}
 
@@ -222,17 +251,29 @@ func (nd *node) Lookup(path string) (Node, string) {
 	// Program optimization lowercase.
 	// avoid applying for buffer in the loop
 	// 这里可以优化掉 3 alloc/op  尽可能的避免在循环里申请buffer 代替lowercase
-	buf := bytes.NewBufferString(path)
-	buf.Reset()
+	buf := indices_pool.Get().(*[]byte)
+	// reset
+	w := 0
+	//	lowercaseWithBuffer(buf, uint8('/'), w)
+	//	w++
+	defer indices_pool.Put(buf)
 	for i := 0; i < len_path; i++ {
 		tmp_b := uint8(path[i])
-		lowercaseWithBuffer(buf, tmp_b)
+
 		if path[i] != '/' || i == 0 {
+			lowercaseWithBuffer(*buf, tmp_b, w)
+			w++
 			continue
 		}
+		// next = head.GetNodeAuto((path[begin:i]))
+		// link.DEBUG_PRINT("NODE LOOKUP", bytesconv.BytesToString(buf[:w]), " w=", w, "\n")
+		next = head.GetNodeAuto(bytesconv.BytesToString((*buf)[:w]))
 
-		//next = head.GetNodeAuto(lowercase(path[begin:i]))
-		next = head.GetNodeAuto(string(buf.Bytes()[begin:i]))
+		// reset
+		w = 0
+		lowercaseWithBuffer((*buf), uint8('/'), w)
+		w++
+
 		if next == nil {
 			return head, path[begin:]
 		}
@@ -422,7 +463,8 @@ func (nd *node) AddRoute(path string, handle gnet.HandleFunc, param_keys []strin
 	ok := f_node.AddNode(head)
 	// there should be no such situation. if there is, there is a problem with previous procedure.
 	if !ok {
-		panic("[ERROR][GROUTER][ADD_NODE][CHILD_EXIST]CHILD_KEY[" + head.GetIndices() + "]")
+		link.DEBUG_PRINT("[ERROR][GROUTER][ADD_NODE][CHILD_EXIST]CHILD_KEY[", head.GetIndices(), "]")
+		panic("[ERROR][GROUTER][ADD_NODE][CHILD_EXIST]CHILD_KEY[")
 	}
 	next.AddKey(param_keys)
 	next.SetPath(path)

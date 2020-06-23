@@ -37,11 +37,11 @@ func lowercase(indices string) string {
 	return buf.String()
 }
 
-func lowercaseWithBuffer(buf *bytes.Buffer, b byte) {
+func lowercaseWithBuffer(buf []byte, b byte, w int) {
 	var leter_num uint8 = 26
 	if b >= CAPTIAL_MIN_LETER_UINT8 && b < CAPTIAL_MIN_LETER_UINT8+leter_num {
 		b += DIFF_LETER_UINT8
 	}
 
-	buf.WriteByte(b)
+	buf[w] = b
 }
